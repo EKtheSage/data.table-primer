@@ -98,15 +98,73 @@ head(dt['A', on = 'provider'], 5)
 ```
 
 
-## Column selects
+## Column selects - using names
 
-- Can use names
-- Can use numbers
+- Notice that `df` returns a vector instead of data.frame
+```{r}
+head(df[, 'claims'], 5)
+```
+- `dt` returns a single column data.table, `data.table` tries to be consistent in returning data.table object from user operation
+```{r}
+head(dt[, 'claims'], 5)
+```
+## Column selects - using names - Cont.
 
-## Column selects unique to data.table
+- To return a vector from a data.table, one can use the following
+```{r}
+head(df[['claims']], 5)
+head(df$claims, 5)
+head(dt[['claims']], 5)
+head(dt$claims, 5)
+```
 
-- Can use varaible of names
-- Can use list
+## Column selects - multiple names
+
+```{r}
+head(df[, c('claims', 'provider')], 5)
+head(dt[, c('claims', 'provider')], 5)
+```
+
+
+## Column selects - using numbers
+
+- Although selecting by column number is not good practice in general, it is supported to help data.frame users transition more smoothly to data.table
+```{r}
+head(df[, 1:3], 5)
+head(dt[, 1:3], 5)
+```
+
+## Column selects different to data.frame - use list
+
+- `.()` is an alias for `list()`, this shortens the syntax
+- You don't need to have quotation mark around the column names
+```{r}
+head(dt[, list(claims, provider)], 5)
+head(dt[, .(claims, provider)], 5)
+```
+
+
+## Column selects different to data.table - variable approach with `mget` or `..`
+
+- This is useful when you have several columns you want to select and don't want to clutter your data.table operation
+- Or you are passing variables in a function call
+```{r}
+cols_to_select <- c('claims', 'provider', 'providerA', 'logclaims')
+head(df[, cols_to_select], 5)
+#head(dt[, cols_to_select], 5) # because you can call column name directly, data.table will try to look for cols_to_select as a column in the table
+# Error in `[.data.table`(dt, , cols_to_select) : j...
+```
+## Column selects different to data.table - variable approach with `mget` or `..` - Cont.
+
+- Use `mget` to get the column names in the correct scope
+```{r}
+head(dt[, mget(cols_to_select)], 5)
+```
+- Use `..` to achieve the same result
+```{r}
+head(dt[, ..cols_to_select], 5)
+```
+
 
 # How to add columns to a data.table
 

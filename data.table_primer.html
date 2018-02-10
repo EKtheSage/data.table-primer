@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Ethan Kang" />
+  <title>data.table primer</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="data.table_primer_files/reveal.js-3.3.0.1/css/reveal.css"/>
+
+
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+<link rel="stylesheet" href="data.table_primer_files/reveal.js-3.3.0.1/css/theme/sky.css" id="theme">
+
+
+  <!-- some tweaks to reveal css -->
+  <style type="text/css">
+    .reveal h1 { font-size: 2.0em; }
+    .reveal h2 { font-size: 1.5em;  }
+    .reveal h3 { font-size: 1.25em;	}
+    .reveal h4 { font-size: 1em;	}
+
+    .reveal .slides>section,
+    .reveal .slides>section>section {
+      padding: 0px 0px;
+    }
+
+
+
+    .reveal table {
+      border-width: 1px;
+      border-spacing: 2px;
+      border-style: dotted;
+      border-color: gray;
+      border-collapse: collapse;
+      font-size: 0.7em;
+    }
+
+    .reveal table th {
+      border-width: 1px;
+      padding-left: 10px;
+      padding-right: 25px;
+      font-weight: bold;
+      border-style: dotted;
+      border-color: gray;
+    }
+
+    .reveal table td {
+      border-width: 1px;
+      padding-left: 10px;
+      padding-right: 25px;
+      border-style: dotted;
+      border-color: gray;
+    }
+
+    .reveal .slide-menu-button {
+      left: 105px !important;
+    }
+
+  </style>
+
+    <style type="text/css">code{white-space: pre;}</style>
+
+
+<!-- Printing and PDF exports -->
+<script id="paper-css" type="application/dynamic-css">
+
+/* Default Print Stylesheet Template
+   by Rob Glazebrook of CSSnewbie.com
+   Last Updated: June 4, 2008
+
+   Feel free (nay, compelled) to edit, append, and
+   manipulate this file as you see fit. */
+
+
+@media print {
+
+	/* SECTION 1: Set default width, margin, float, and
+	   background. This prevents elements from extending
+	   beyond the edge of the printed page, and prevents
+	   unnecessary background images from printing */
+	html {
+		background: #fff;
+		width: auto;
+		height: auto;
+		overflow: visible;
+	}
+	body {
+		background: #fff;
+		font-size: 20pt;
+		width: auto;
+		height: auto;
+		border: 0;
+		margin: 0 5%;
+		padding: 0;
+		overflow: visible;
+		float: none !important;
+	}
+
+	/* SECTION 2: Remove any elements not needed in print.
+	   This would include navigation, ads, sidebars, etc. */
+	.nestedarrow,
+	.controls,
+	.fork-reveal,
+	.share-reveal,
+	.state-background,
+	.reveal .progress,
+	.reveal .backgrounds {
+		display: none !important;
+	}
+
+	/* SECTION 3: Set body font face, size, and color.
+	   Consider using a serif font for readability. */
+	body, p, td, li, div {
+		font-size: 20pt!important;
+		font-family: Georgia, "Times New Roman", Times, serif !important;
+		color: #000;
+	}
+
+	/* SECTION 4: Set heading font face, sizes, and color.
+	   Differentiate your headings from your body text.
+	   Perhaps use a large sans-serif for distinction. */
+	h1,h2,h3,h4,h5,h6 {
+		color: #000!important;
+		height: auto;
+		line-height: normal;
+		font-family: Georgia, "Times New Roman", Times, serif !important;
+		text-shadow: 0 0 0 #000 !important;
+		text-align: left;
+		letter-spacing: normal;
+	}
+	/* Need to reduce the size of the fonts for printing */
+	h1 { font-size: 28pt !important;  }
+	h2 { font-size: 24pt !important; }
+	h3 { font-size: 22pt !important; }
+	h4 { font-size: 22pt !important; font-variant: small-caps; }
+	h5 { font-size: 21pt !important; }
+	h6 { font-size: 20pt !important; font-style: italic; }
+
+	/* SECTION 5: Make hyperlinks more usable.
+	   Ensure links are underlined, and consider appending
+	   the URL to the end of the link for usability. */
+	a:link,
+	a:visited {
+		color: #000 !important;
+		font-weight: bold;
+		text-decoration: underline;
+	}
+	/*
+	.reveal a:link:after,
+	.reveal a:visited:after {
+		content: " (" attr(href) ") ";
+		color: #222 !important;
+		font-size: 90%;
+	}
+	*/
+
+
+	/* SECTION 6: more reveal.js specific additions by @skypanther */
+	ul, ol, div, p {
+		visibility: visible;
+		position: static;
+		width: auto;
+		height: auto;
+		display: block;
+		overflow: visible;
+		margin: 0;
+		text-align: left !important;
+	}
+	.reveal pre,
+	.reveal table {
+		margin-left: 0;
+		margin-right: 0;
+	}
+	.reveal pre code {
+		padding: 20px;
+		border: 1px solid #ddd;
+	}
+	.reveal blockquote {
+		margin: 20px 0;
+	}
+	.reveal .slides {
+		position: static !important;
+		width: auto !important;
+		height: auto !important;
+
+		left: 0 !important;
+		top: 0 !important;
+		margin-left: 0 !important;
+		margin-top: 0 !important;
+		padding: 0 !important;
+		zoom: 1 !important;
+
+		overflow: visible !important;
+		display: block !important;
+
+		text-align: left !important;
+		-webkit-perspective: none;
+		   -moz-perspective: none;
+		    -ms-perspective: none;
+		        perspective: none;
+
+		-webkit-perspective-origin: 50% 50%;
+		   -moz-perspective-origin: 50% 50%;
+		    -ms-perspective-origin: 50% 50%;
+		        perspective-origin: 50% 50%;
+	}
+	.reveal .slides section {
+		visibility: visible !important;
+		position: static !important;
+		width: auto !important;
+		height: auto !important;
+		display: block !important;
+		overflow: visible !important;
+
+		left: 0 !important;
+		top: 0 !important;
+		margin-left: 0 !important;
+		margin-top: 0 !important;
+		padding: 60px 20px !important;
+		z-index: auto !important;
+
+		opacity: 1 !important;
+
+		page-break-after: always !important;
+
+		-webkit-transform-style: flat !important;
+		   -moz-transform-style: flat !important;
+		    -ms-transform-style: flat !important;
+		        transform-style: flat !important;
+
+		-webkit-transform: none !important;
+		   -moz-transform: none !important;
+		    -ms-transform: none !important;
+		        transform: none !important;
+
+		-webkit-transition: none !important;
+		   -moz-transition: none !important;
+		    -ms-transition: none !important;
+		        transition: none !important;
+	}
+	.reveal .slides section.stack {
+		padding: 0 !important;
+	}
+	.reveal section:last-of-type {
+		page-break-after: avoid !important;
+	}
+	.reveal section .fragment {
+		opacity: 1 !important;
+		visibility: visible !important;
+
+		-webkit-transform: none !important;
+		   -moz-transform: none !important;
+		    -ms-transform: none !important;
+		        transform: none !important;
+	}
+	.reveal section img {
+		display: block;
+		margin: 15px 0px;
+		background: rgba(255,255,255,1);
+		border: 1px solid #666;
+		box-shadow: none;
+	}
+
+	.reveal section small {
+		font-size: 0.8em;
+	}
+
+}  
+</script>
+
+
+<script id="pdf-css" type="application/dynamic-css">
+    
+/**
+ * This stylesheet is used to print reveal.js
+ * presentations to PDF.
+ *
+ * https://github.com/hakimel/reveal.js#pdf-export
+ */
+
+* {
+	-webkit-print-color-adjust: exact;
+}
+
+body {
+	margin: 0 auto !important;
+	border: 0;
+	padding: 0;
+	float: none !important;
+	overflow: visible;
+}
+
+html {
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+/* Remove any elements not needed in print. */
+.nestedarrow,
+.reveal .controls,
+.reveal .progress,
+.reveal .playback,
+.reveal.overview,
+.fork-reveal,
+.share-reveal,
+.state-background {
+	display: none !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	text-shadow: 0 0 0 #000 !important;
+}
+
+.reveal pre code {
+	overflow: hidden !important;
+	font-family: Courier, 'Courier New', monospace !important;
+}
+
+ul, ol, div, p {
+	visibility: visible;
+	position: static;
+	width: auto;
+	height: auto;
+	display: block;
+	overflow: visible;
+	margin: auto;
+}
+.reveal {
+	width: auto !important;
+	height: auto !important;
+	overflow: hidden !important;
+}
+.reveal .slides {
+	position: static;
+	width: 100%;
+	height: auto;
+
+	left: auto;
+	top: auto;
+	margin: 0 !important;
+	padding: 0 !important;
+
+	overflow: visible;
+	display: block;
+
+	-webkit-perspective: none;
+	   -moz-perspective: none;
+	    -ms-perspective: none;
+	        perspective: none;
+
+	-webkit-perspective-origin: 50% 50%; /* there isn't a none/auto value but 50-50 is the default */
+	   -moz-perspective-origin: 50% 50%;
+	    -ms-perspective-origin: 50% 50%;
+	        perspective-origin: 50% 50%;
+}
+
+.reveal .slides section {
+	page-break-after: always !important;
+
+	visibility: visible !important;
+	position: relative !important;
+	display: block !important;
+	position: relative !important;
+
+	margin: 0 !important;
+	padding: 0 !important;
+	box-sizing: border-box !important;
+	min-height: 1px;
+
+	opacity: 1 !important;
+
+	-webkit-transform-style: flat !important;
+	   -moz-transform-style: flat !important;
+	    -ms-transform-style: flat !important;
+	        transform-style: flat !important;
+
+	-webkit-transform: none !important;
+	   -moz-transform: none !important;
+	    -ms-transform: none !important;
+	        transform: none !important;
+}
+
+.reveal section.stack {
+	margin: 0 !important;
+	padding: 0 !important;
+	page-break-after: avoid !important;
+	height: auto !important;
+	min-height: auto !important;
+}
+
+.reveal img {
+	box-shadow: none;
+}
+
+.reveal .roll {
+	overflow: visible;
+	line-height: 1em;
+}
+
+/* Slide backgrounds are placed inside of their slide when exporting to PDF */
+.reveal section .slide-background {
+	display: block !important;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: -1;
+}
+
+/* All elements should be above the slide-background */
+.reveal section>* {
+	position: relative;
+	z-index: 1;
+}
+
+/* Display slide speaker notes when 'showNotes' is enabled */
+.reveal .speaker-notes-pdf {
+	display: block;
+	width: 100%;
+	max-height: none;
+	left: auto;
+	top: auto;
+	z-index: 100;
+}
+
+/* Display slide numbers when 'slideNumber' is enabled */
+.reveal .slide-number-pdf {
+	display: block;
+	position: absolute;
+	font-size: 14px;
+}
+
+</script>
+
+
+<script>
+var style = document.createElement( 'style' );
+style.type = 'text/css';
+var style_script_id = window.location.search.match( /print-pdf/gi ) ? 'pdf-css' : 'paper-css';
+var style_script = document.getElementById(style_script_id).text;
+style.innerHTML = style_script;
+document.getElementsByTagName('head')[0].appendChild(style);
+</script>
+
+    <link href="data.table_primer_files/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">data.table primer</h1>
+    <h2 class="author">Ethan Kang</h2>
+    <h3 class="date">February 4, 2018</h3>
+</section>
+
+<section><section id="data.table-introduction-for-actuaries" class="titleslide slide level1"><h1>data.table introduction for actuaries</h1></section><section id="agenda" class="slide level2">
+<h2>Agenda</h2>
+<ul>
+<li>What is data.table?</li>
+<li>Why you should learn it?</li>
+<li>data.table features in depth</li>
+</ul>
+</section><section id="data.table" class="slide level2">
+<h2>data.table</h2>
+<ul>
+<li>A package that does tablular data manipulation</li>
+<li>data.table inherits from data.frame in R</li>
+<li>In memory computation provides fast data processing speed</li>
+</ul>
+</section><section id="benefits-of-using-data.table" class="slide level2">
+<h2>Benefits of using data.table</h2>
+<ul>
+<li>Intuitive syntax of <code>[i = where, j = select, by = group by, ...]</code> is similar to SQL <code>where, select, group by</code> statements</li>
+<li>Fastest in memory data manipulation tool in R
+<ul>
+<li>Include plot of benchmark?</li>
+<li>Time is Money, Money is Power, Power is Pizza</li>
+</ul></li>
+<li>Active community on stackoverflow, so your question is most likely answered already on it</li>
+</ul>
+</section><section id="load-packages-before-we-start" class="slide level2">
+<h2>Load packages before we start</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(pacman)) <span class="kw">install.packages</span>(<span class="st">&#39;pacman&#39;</span>)</code></pre></div>
+<pre><code>## Loading required package: pacman</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(CASdatasets)) <span class="kw">install.packages</span>(<span class="st">&quot;CASdatasets&quot;</span>, <span class="dt">repos =</span> <span class="st">&quot;http://cas.uqam.ca/pub/R/&quot;</span>)</code></pre></div>
+<pre><code>## Loading required package: CASdatasets</code></pre>
+<pre><code>## Loading required package: xts</code></pre>
+<pre><code>## Loading required package: zoo</code></pre>
+<pre><code>## 
+## Attaching package: &#39;zoo&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     as.Date, as.Date.numeric</code></pre>
+<pre><code>## Loading required package: sp</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pacman<span class="op">::</span><span class="kw">p_load</span>(CASdatasets, data.table)</code></pre></div>
+</section></section>
+<section><section id="data.table-is-very-similar-to-data.frame" class="titleslide slide level1"><h1>data.table is very similar to data.frame</h1></section><section id="create-tables" class="slide level2">
+<h2>Create tables</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(<span class="st">&#39;usmassBI&#39;</span>)
+df &lt;-<span class="st"> </span>usmassBI
+dt &lt;-<span class="st"> </span><span class="kw">data.table</span>(df)
+<span class="kw">class</span>(df)</code></pre></div>
+<pre><code>## [1] &quot;data.frame&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">class</span>(dt)</code></pre></div>
+<pre><code>## [1] &quot;data.table&quot; &quot;data.frame&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setDT</span>(df) <span class="co"># modifies df to become a data.table in place without copying</span>
+<span class="kw">class</span>(df)</code></pre></div>
+<pre><code>## [1] &quot;data.table&quot; &quot;data.frame&quot;</code></pre>
+<ul>
+<li><code>setDT</code> is very useful when working with large dataset as it avoids copying. For more information, read the discussion on <a href="https://stackoverflow.com/questions/41917887/when-should-i-use-setdt-instead-of-data-table-to-create-a-data-table">stackoverflow</a>.</li>
+</ul>
+</section><section id="looking-at-the-data.table" class="slide level2">
+<h2>Looking at the data.table</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(<span class="st">&#39;usmassBI&#39;</span>)
+df &lt;-<span class="st"> </span>usmassBI
+<span class="kw">summary</span>(df)</code></pre></div>
+<pre><code>##      claims        provider     providerA        logclaims      
+##  Min.   : 0.045   A    : 76   Min.   :0.0000   Min.   :-3.1010  
+##  1st Qu.: 1.210   Other:272   1st Qu.:1.0000   1st Qu.: 0.1908  
+##  Median : 2.542               Median :1.0000   Median : 0.9325  
+##  Mean   : 2.830               Mean   :0.7816   Mean   : 0.6225  
+##  3rd Qu.: 3.473               3rd Qu.:1.0000   3rd Qu.: 1.2450  
+##  Max.   :50.000               Max.   :1.0000   Max.   : 3.9120</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(dt)</code></pre></div>
+<pre><code>##      claims        provider     providerA        logclaims      
+##  Min.   : 0.045   A    : 76   Min.   :0.0000   Min.   :-3.1010  
+##  1st Qu.: 1.210   Other:272   1st Qu.:1.0000   1st Qu.: 0.1908  
+##  Median : 2.542               Median :1.0000   Median : 0.9325  
+##  Mean   : 2.830               Mean   :0.7816   Mean   : 0.6225  
+##  3rd Qu.: 3.473               3rd Qu.:1.0000   3rd Qu.: 1.2450  
+##  Max.   :50.000               Max.   :1.0000   Max.   : 3.9120</code></pre>
+</section><section id="row-subsets" class="slide level2">
+<h2>Row subsets</h2>
+<ul>
+<li>row filters using slices <code>:</code> inside <code>[i, ]</code></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># returns row 1 to 3 </span>
+df[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, ]</code></pre></div>
+<pre><code>##   claims provider providerA logclaims
+## 1  0.045    Other         1    -3.101
+## 2  0.047    Other         1    -3.058
+## 3  0.070    Other         1    -2.659</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, ]</code></pre></div>
+<pre><code>##    claims provider providerA logclaims
+## 1:  0.045    Other         1    -3.101
+## 2:  0.047    Other         1    -3.058
+## 3:  0.070    Other         1    -2.659</code></pre>
+</section><section id="row-subsets-different-to-data.frame" class="slide level2">
+<h2>Row subsets different to data.frame</h2>
+<ul>
+<li>Filter based on column name - less typing than data.frame</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[df<span class="op">$</span>provider <span class="op">==</span><span class="st"> &#39;A&#39;</span>, ], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##     claims provider providerA logclaims
+## 37   0.430        A         0    -0.844
+## 44   0.514        A         0    -0.666
+## 70   0.836        A         0    -0.179
+## 108  1.645        A         0     0.498
+## 113  1.700        A         0     0.531</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[provider <span class="op">==</span><span class="st"> &#39;A&#39;</span>, ], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims provider providerA logclaims
+## 1:  0.430        A         0    -0.844
+## 2:  0.514        A         0    -0.666
+## 3:  0.836        A         0    -0.179
+## 4:  1.645        A         0     0.498
+## 5:  1.700        A         0     0.531</code></pre>
+</section><section id="row-subsets-different-to-data.frame---cont." class="slide level2">
+<h2>Row subsets different to data.frame - Cont.</h2>
+<ul>
+<li>Using secondary index <code>on</code> notation - this is faster than normal subset above
+<ul>
+<li>Read more about secondary index in the <a href="https://cran.r-project.org/web/packages/data.table/vignettes/datatable-secondary-indices-and-auto-indexing.html">vignette</a></li>
+</ul></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[<span class="st">&#39;A&#39;</span>, <span class="dt">on =</span> <span class="st">&#39;provider&#39;</span>], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims provider providerA logclaims
+## 1:  0.430        A         0    -0.844
+## 2:  0.514        A         0    -0.666
+## 3:  0.836        A         0    -0.179
+## 4:  1.645        A         0     0.498
+## 5:  1.700        A         0     0.531</code></pre>
+</section><section id="column-selects---using-names" class="slide level2">
+<h2>Column selects - using names</h2>
+<ul>
+<li>Notice that <code>df</code> returns a vector instead of data.frame</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[, <span class="st">&#39;claims&#39;</span>], <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
+<ul>
+<li><code>dt</code> returns a single column data.table, <code>data.table</code> tries to be consistent in returning data.table object from user operation</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="st">&#39;claims&#39;</span>], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims
+## 1:  0.045
+## 2:  0.047
+## 3:  0.070
+## 4:  0.075
+## 5:  0.077</code></pre>
+</section><section id="column-selects---using-names---cont." class="slide level2">
+<h2>Column selects - using names - Cont.</h2>
+<ul>
+<li>To return a vector from a data.table, one can use the following</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[[<span class="st">&#39;claims&#39;</span>]], <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df<span class="op">$</span>claims, <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[[<span class="st">&#39;claims&#39;</span>]], <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt<span class="op">$</span>claims, <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
+</section><section id="column-selects---multiple-names" class="slide level2">
+<h2>Column selects - multiple names</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[, <span class="kw">c</span>(<span class="st">&#39;claims&#39;</span>, <span class="st">&#39;provider&#39;</span>)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##   claims provider
+## 1  0.045    Other
+## 2  0.047    Other
+## 3  0.070    Other
+## 4  0.075    Other
+## 5  0.077    Other</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="kw">c</span>(<span class="st">&#39;claims&#39;</span>, <span class="st">&#39;provider&#39;</span>)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims provider
+## 1:  0.045    Other
+## 2:  0.047    Other
+## 3:  0.070    Other
+## 4:  0.075    Other
+## 5:  0.077    Other</code></pre>
+</section><section id="column-selects---using-numbers" class="slide level2">
+<h2>Column selects - using numbers</h2>
+<ul>
+<li>Although selecting by column number is not good practice in general, it is supported to help data.frame users transition more smoothly to data.table</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[, <span class="dv">1</span><span class="op">:</span><span class="dv">3</span>], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##   claims provider providerA
+## 1  0.045    Other         1
+## 2  0.047    Other         1
+## 3  0.070    Other         1
+## 4  0.075    Other         1
+## 5  0.077    Other         1</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="dv">1</span><span class="op">:</span><span class="dv">3</span>], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims provider providerA
+## 1:  0.045    Other         1
+## 2:  0.047    Other         1
+## 3:  0.070    Other         1
+## 4:  0.075    Other         1
+## 5:  0.077    Other         1</code></pre>
+</section><section id="column-selects-different-to-data.frame---use-list" class="slide level2">
+<h2>Column selects different to data.frame - use list</h2>
+<ul>
+<li><code>.()</code> is an alias for <code>list()</code>, this shortens the syntax</li>
+<li>You don’t need to have quotation mark around the column names</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="kw">list</span>(claims, provider)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims provider
+## 1:  0.045    Other
+## 2:  0.047    Other
+## 3:  0.070    Other
+## 4:  0.075    Other
+## 5:  0.077    Other</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, .(claims, provider)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims provider
+## 1:  0.045    Other
+## 2:  0.047    Other
+## 3:  0.070    Other
+## 4:  0.075    Other
+## 5:  0.077    Other</code></pre>
+</section><section id="column-selects-different-to-data.table---variable-approach-with-mget-or-.." class="slide level2">
+<h2>Column selects different to data.table - variable approach with <code>mget</code> or <code>..</code></h2>
+<ul>
+<li>This is useful when you have several columns you want to select and don’t want to clutter your data.table operation</li>
+<li>Or you are passing variables in a function call</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cols_to_select &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;claims&#39;</span>, <span class="st">&#39;provider&#39;</span>, <span class="st">&#39;providerA&#39;</span>, <span class="st">&#39;logclaims&#39;</span>)
+<span class="kw">head</span>(df[, cols_to_select], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##   claims provider providerA logclaims
+## 1  0.045    Other         1    -3.101
+## 2  0.047    Other         1    -3.058
+## 3  0.070    Other         1    -2.659
+## 4  0.075    Other         1    -2.590
+## 5  0.077    Other         1    -2.564</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#head(dt[, cols_to_select], 5) # because you can call column name directly, data.table will try to look for cols_to_select as a column in the table</span>
+<span class="co"># Error in `[.data.table`(dt, , cols_to_select) : j...</span></code></pre></div>
+</section><section id="column-selects-different-to-data.table---variable-approach-with-mget-or-..---cont." class="slide level2">
+<h2>Column selects different to data.table - variable approach with <code>mget</code> or <code>..</code> - Cont.</h2>
+<ul>
+<li>Use <code>mget</code> to get the column names in the correct scope</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="kw">mget</span>(cols_to_select)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims provider providerA logclaims
+## 1:  0.045    Other         1    -3.101
+## 2:  0.047    Other         1    -3.058
+## 3:  0.070    Other         1    -2.659
+## 4:  0.075    Other         1    -2.590
+## 5:  0.077    Other         1    -2.564</code></pre>
+<ul>
+<li>Use <code>..</code> to achieve the same result</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, ..cols_to_select], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims provider providerA logclaims
+## 1:  0.045    Other         1    -3.101
+## 2:  0.047    Other         1    -3.058
+## 3:  0.070    Other         1    -2.659
+## 4:  0.075    Other         1    -2.590
+## 5:  0.077    Other         1    -2.564</code></pre>
+</section></section>
+<section><section id="how-to-add-columns-to-a-data.table" class="titleslide slide level1"><h1>How to add columns to a data.table</h1></section><section id="add-columns" class="slide level2">
+<h2>Add columns</h2>
+<ul>
+<li>Based on existing columns</li>
+<li>From vectors</li>
+<li>Summarize (mean, median, max, etc) with group by</li>
+</ul>
+</section></section>
+<section><section id="how-to-make-data.table-even-faster" class="titleslide slide level1"><h1>How to make data.table even faster</h1></section><section id="update-by-reference" class="slide level2">
+<h2>Update by reference</h2>
+<ul>
+<li><code>:=</code> notation</li>
+<li>set operation</li>
+</ul>
+</section></section>
+<section><section id="how-to-join-tables-together-using-data.table" class="titleslide slide level1"><h1>How to join tables together using data.table</h1></section><section id="joins" class="slide level2">
+<h2>Joins</h2>
+<ul>
+<li>merge</li>
+<li><code>[</code> notation</li>
+</ul>
+</section><section id="append-multiple-data.frames-together-union" class="slide level2">
+<h2>Append multiple data.frames together (<code>Union</code>)</h2>
+</section></section>
+<section><section id="how-to-do-a-sql-transform-and-back-in-data.table" class="titleslide slide level1"><h1>How to do a SQL <code>transform</code> (and back) in data.table</h1></section><section id="pivot-table-from-long-to-wide" class="slide level2">
+<h2>Pivot table from long to wide</h2>
+<ul>
+<li>dcast</li>
+</ul>
+</section><section id="pivot-table-from-wide-to-long" class="slide level2">
+<h2>Pivot table from wide to long</h2>
+<ul>
+<li>melt</li>
+</ul>
+</section></section>
+<section><section id="work-with-data.table-using-variables" class="titleslide slide level1"><h1>Work with data.table using variables</h1></section><section id="passing-variables-to-data.table" class="slide level2">
+<h2>Passing variables to data.table</h2>
+<ul>
+<li>Inside a function using get/mget</li>
+<li>Applying functions to multiple columns (<code>.SD, .SDcols</code>)</li>
+</ul>
+</section></section>
+    </div>
+  </div>
+
+  <script src="data.table_primer_files/reveal.js-3.3.0.1/lib/js/head.min.js"></script>
+  <script src="data.table_primer_files/reveal.js-3.3.0.1/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        // Push each slide change to the browser history
+        history: true,
+        // Vertical centering of slides
+        center: false,
+        // Transition style
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        // Transition style for full page slide backgrounds
+        backgroundTransition: 'default', // none/fade/slide/convex/concave/zoom
+
+        menu: {
+          numbers: true,
+          custom: false,
+          themes: false,
+          transitions: false
+        },
+
+
+
+        chalkboard: {
+        },
+
+        keyboard: {
+          67: function() { RevealChalkboard.toggleNotesCanvas() },    // toggle notes canvas when 'c' is pressed
+          66: function() { RevealChalkboard.toggleChalkboard() }, // toggle chalkboard when 'b' is pressed
+          46: function() { RevealChalkboard.clear() },    // clear chalkboard when 'DEL' is pressed
+           8: function() { RevealChalkboard.reset() },    // reset chalkboard data on current slide when 'BACKSPACE' is pressed
+          68: function() { RevealChalkboard.download() }, // downlad recorded chalkboard drawing when 'd' is pressed
+        },
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'data.table_primer_files/reveal.js-3.3.0.1/plugin/chalkboard/chalkboard.js', async: true },
+          { src: 'data.table_primer_files/reveal.js-3.3.0.1/plugin/menu/menu.js', async: true },
+        ]
+      });
+    </script>
+  <!-- dynamically load mathjax for compatibility with self-contained -->
+  <script>
+    (function () {
+      var script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+      document.getElementsByTagName("head")[0].appendChild(script);
+    })();
+  </script>
+
+<script>
+  (function() {
+    if (window.jQuery) {
+      Reveal.addEventListener( 'slidechanged', function(event) {  
+        window.jQuery(event.previousSlide).trigger('hidden');
+        window.jQuery(event.currentSlide).trigger('shown');
+      });
+    }
+  })();
+</script>
+
+
+  </body>
+</html>
