@@ -27,7 +27,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## data.table
 
-- A package that inherits from data.frame in R
+- A package that does tablular data manipulation
+- data.table inherits from data.frame in R
 - In memory computation provides fast data processing speed
 
 ## Benefits of using data.table
