@@ -518,59 +518,102 @@ document.getElementsByTagName('head')[0].appendChild(style);
 <li>Include plot of benchmark?</li>
 <li>Time is Money, Money is Power, Power is Pizza</li>
 </ul></li>
-<li>Active community on stackoverflow, so your question is most likely answered already on it</li>
+<li>Active community on StackOverflow, so your question is most likely answered already on it</li>
 </ul>
 </section><section id="load-packages-before-we-start" class="slide level2">
 <h2>Load packages before we start</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(pacman)) <span class="kw">install.packages</span>(<span class="st">&#39;pacman&#39;</span>)</code></pre></div>
-<pre><code>## Loading required package: pacman</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(CASdatasets)) <span class="kw">install.packages</span>(<span class="st">&quot;CASdatasets&quot;</span>, <span class="dt">repos =</span> <span class="st">&quot;http://cas.uqam.ca/pub/R/&quot;</span>)</code></pre></div>
-<pre><code>## Loading required package: CASdatasets</code></pre>
-<pre><code>## Loading required package: xts</code></pre>
-<pre><code>## Loading required package: zoo</code></pre>
-<pre><code>## 
-## Attaching package: &#39;zoo&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     as.Date, as.Date.numeric</code></pre>
-<pre><code>## Loading required package: sp</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pacman<span class="op">::</span><span class="kw">p_load</span>(CASdatasets, data.table)</code></pre></div>
+<p>Note, this next code block will install the <code>data.table</code> package if it is not already installed.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(ggplot2)
+<span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(data.table)) <span class="kw">install.packages</span>(<span class="st">&quot;data.table&quot;</span>)</code></pre></div>
+<pre><code>## Loading required package: data.table</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(data.table)</code></pre></div>
 </section></section>
 <section><section id="data.table-is-very-similar-to-data.frame" class="titleslide slide level1"><h1>data.table is very similar to data.frame</h1></section><section id="create-tables" class="slide level2">
 <h2>Create tables</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(<span class="st">&#39;usmassBI&#39;</span>)
-df &lt;-<span class="st"> </span>usmassBI
-dt &lt;-<span class="st"> </span><span class="kw">data.table</span>(df)
-<span class="kw">class</span>(df)</code></pre></div>
+<p>This block creates a list of approximately one million auto claims allocated to 1966–2015, so all are assumed at ultimate. To test the speed of reading files into R, the file has already been created and saved as <code>SampleAutoLosses.csv</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">354</span>)
+years &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1966</span>, <span class="dv">2015</span>)
+counts &lt;-<span class="st"> </span><span class="kw">rnbinom</span>(<span class="kw">length</span>(years), <span class="dt">size =</span> <span class="dv">3000</span>, <span class="dt">mu =</span> <span class="dv">20000</span>)
+allCounts &lt;-<span class="st"> </span><span class="kw">sum</span>(counts)
+smallCounts &lt;-<span class="st"> </span><span class="kw">floor</span>(<span class="fl">0.7</span> <span class="op">*</span><span class="st"> </span>allCounts)
+bigCounts &lt;-<span class="st"> </span>allCounts <span class="op">-</span><span class="st"> </span>smallCounts
+numPassBig &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">seq_len</span>(<span class="dv">6</span>), bigCounts, <span class="dt">replace =</span> <span class="ot">TRUE</span>,
+                     <span class="dt">prob =</span> <span class="kw">c</span>(<span class="fl">0.4</span>, <span class="fl">0.2</span>, <span class="fl">0.15</span>, <span class="fl">0.1</span>, <span class="fl">0.08</span>, <span class="fl">0.07</span>))
+numPassSmall &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">seq_len</span>(<span class="dv">3</span>), smallCounts, <span class="dt">replace =</span> <span class="ot">TRUE</span>,
+                       <span class="dt">prob =</span> <span class="kw">c</span>(<span class="fl">0.7</span>, <span class="fl">0.25</span>, .<span class="dv">05</span>))
+smallLosses &lt;-<span class="st"> </span><span class="kw">rgamma</span>(smallCounts, <span class="dt">shape =</span> <span class="dv">4</span>, <span class="dt">scale =</span> <span class="dv">2500</span>)
+bigLosses &lt;-<span class="st"> </span><span class="kw">rgamma</span>(bigCounts, <span class="dt">shape =</span> <span class="fl">0.5</span>, <span class="dt">scale =</span> <span class="fl">1e6</span>)
+sLosses_df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">Loss =</span> smallLosses, <span class="dt">Pass =</span> numPassSmall)
+bLosses_df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">Loss =</span> bigLosses, <span class="dt">Pass =</span> numPassBig)
+aLosses_df &lt;-<span class="st"> </span><span class="kw">rbind</span>(sLosses_df, bLosses_df)
+losses_df &lt;-<span class="st"> </span>aLosses_df[<span class="kw">sample</span>(<span class="kw">nrow</span>(aLosses_df)), ]
+<span class="kw">row.names</span>(losses_df) &lt;-<span class="st"> </span><span class="ot">NULL</span>
+ALAE_P =<span class="st"> </span><span class="kw">rlnorm</span>(allCounts, <span class="dt">meanlog =</span> <span class="kw">log</span>(<span class="fl">0.1</span>) <span class="op">-</span><span class="st"> </span><span class="kw">log</span>(<span class="dv">5</span>) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>,
+                <span class="dt">sdlog =</span> <span class="kw">sqrt</span>(<span class="kw">log</span>(<span class="dv">5</span>)))
+ALAE =<span class="st"> </span>losses_df<span class="op">$</span>Loss <span class="op">*</span><span class="st"> </span>ALAE_P
+writeStates &lt;-<span class="st"> </span>state.abb[state.division <span class="op">%in%</span>
+<span class="st">                           </span><span class="kw">c</span>(<span class="st">&#39;New England&#39;</span>, <span class="st">&#39;Middle Atlantic&#39;</span>, <span class="st">&#39;South Atlantic&#39;</span>)]
+losses_df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">Year =</span> <span class="kw">rep</span>(years, counts), <span class="dt">Loss =</span> <span class="kw">round</span>(losses_df<span class="op">$</span>Loss, <span class="dv">0</span>),
+                        <span class="dt">ALAE =</span> <span class="kw">round</span>(ALAE, <span class="dv">0</span>), <span class="dt">Pass =</span> losses_df<span class="op">$</span>Pass,
+                        <span class="dt">State =</span> <span class="kw">sample</span>(writeStates, allCounts, <span class="dt">replace =</span> <span class="ot">TRUE</span>))</code></pre></div>
+</section><section id="read-data" class="slide level2">
+<h2>Read Data</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">colClass &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;integer&#39;</span>, <span class="kw">rep</span>(<span class="st">&#39;numeric&#39;</span>, <span class="dv">2</span>), <span class="st">&#39;integer&#39;</span>, <span class="st">&#39;character&#39;</span>)
+df_T &lt;-<span class="st"> </span><span class="kw">system.time</span>(df &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&#39;./SampleAutoLosses.csv&#39;</span>, <span class="dt">header =</span> <span class="ot">TRUE</span>,
+                             <span class="dt">colClasses =</span> colClass))
+dt_T &lt;-<span class="st"> </span><span class="kw">system.time</span>(dt &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&#39;./SampleAutoLosses.csv&#39;</span>, <span class="dt">header =</span> <span class="ot">TRUE</span>,
+                             <span class="dt">colClasses =</span> colClass))
+df_T</code></pre></div>
+<pre><code>##    user  system elapsed 
+##    2.18    0.18    2.35</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt_T</code></pre></div>
+<pre><code>##    user  system elapsed 
+##    0.73    0.01    0.75</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">class</span>(df)</code></pre></div>
 <pre><code>## [1] &quot;data.frame&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">class</span>(dt)</code></pre></div>
-<pre><code>## [1] &quot;data.table&quot; &quot;data.frame&quot;</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setDT</span>(df) <span class="co"># modifies df to become a data.table in place without copying</span>
-<span class="kw">class</span>(df)</code></pre></div>
 <pre><code>## [1] &quot;data.table&quot; &quot;data.frame&quot;</code></pre>
 <ul>
 <li><code>setDT</code> is very useful when working with large dataset as it avoids copying. For more information, read the discussion on <a href="https://stackoverflow.com/questions/41917887/when-should-i-use-setdt-instead-of-data-table-to-create-a-data-table">stackoverflow</a>.</li>
 </ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setDT</span>(df) <span class="co"># modifies df to become a data.table in place without copying</span>
+<span class="kw">class</span>(df)</code></pre></div>
+<pre><code>## [1] &quot;data.table&quot; &quot;data.frame&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(df)
+<span class="kw">class</span>(df)</code></pre></div>
+<pre><code>## [1] &quot;data.frame&quot;</code></pre>
 </section><section id="looking-at-the-data.table" class="slide level2">
 <h2>Looking at the data.table</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(<span class="st">&#39;usmassBI&#39;</span>)
-df &lt;-<span class="st"> </span>usmassBI
-<span class="kw">summary</span>(df)</code></pre></div>
-<pre><code>##      claims        provider     providerA        logclaims      
-##  Min.   : 0.045   A    : 76   Min.   :0.0000   Min.   :-3.1010  
-##  1st Qu.: 1.210   Other:272   1st Qu.:1.0000   1st Qu.: 0.1908  
-##  Median : 2.542               Median :1.0000   Median : 0.9325  
-##  Mean   : 2.830               Mean   :0.7816   Mean   : 0.6225  
-##  3rd Qu.: 3.473               3rd Qu.:1.0000   3rd Qu.: 1.2450  
-##  Max.   :50.000               Max.   :1.0000   Max.   : 3.9120</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(df)</code></pre></div>
+<pre><code>##       Year           Loss               ALAE               Pass      
+##  Min.   :1966   Min.   :       0   Min.   :       0   Min.   :1.000  
+##  1st Qu.:1978   1st Qu.:    7097   1st Qu.:     205   1st Qu.:1.000  
+##  Median :1990   Median :   11320   Median :     656   Median :1.000  
+##  Mean   :1990   Mean   :  157321   Mean   :   15644   Mean   :1.686  
+##  3rd Qu.:2003   3rd Qu.:   26621   3rd Qu.:    3002   3rd Qu.:2.000  
+##  Max.   :2015   Max.   :14398043   Max.   :19869346   Max.   :6.000  
+##     State          
+##  Length:1004977    
+##  Class :character  
+##  Mode  :character  
+##                    
+##                    
+## </code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(dt)</code></pre></div>
-<pre><code>##      claims        provider     providerA        logclaims      
-##  Min.   : 0.045   A    : 76   Min.   :0.0000   Min.   :-3.1010  
-##  1st Qu.: 1.210   Other:272   1st Qu.:1.0000   1st Qu.: 0.1908  
-##  Median : 2.542               Median :1.0000   Median : 0.9325  
-##  Mean   : 2.830               Mean   :0.7816   Mean   : 0.6225  
-##  3rd Qu.: 3.473               3rd Qu.:1.0000   3rd Qu.: 1.2450  
-##  Max.   :50.000               Max.   :1.0000   Max.   : 3.9120</code></pre>
+<pre><code>##       Year           Loss               ALAE               Pass      
+##  Min.   :1966   Min.   :       0   Min.   :       0   Min.   :1.000  
+##  1st Qu.:1978   1st Qu.:    7097   1st Qu.:     205   1st Qu.:1.000  
+##  Median :1990   Median :   11320   Median :     656   Median :1.000  
+##  Mean   :1990   Mean   :  157321   Mean   :   15644   Mean   :1.686  
+##  3rd Qu.:2003   3rd Qu.:   26621   3rd Qu.:    3002   3rd Qu.:2.000  
+##  Max.   :2015   Max.   :14398043   Max.   :19869346   Max.   :6.000  
+##     State          
+##  Length:1004977    
+##  Class :character  
+##  Mode  :character  
+##                    
+##                    
+## </code></pre>
 </section><section id="row-subsets" class="slide level2">
 <h2>Row subsets</h2>
 <ul>
@@ -578,34 +621,34 @@ df &lt;-<span class="st"> </span>usmassBI
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># returns row 1 to 3 </span>
 df[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, ]</code></pre></div>
-<pre><code>##   claims provider providerA logclaims
-## 1  0.045    Other         1    -3.101
-## 2  0.047    Other         1    -3.058
-## 3  0.070    Other         1    -2.659</code></pre>
+<pre><code>##   Year  Loss ALAE Pass State
+## 1 1966  4970  407    2    FL
+## 2 1966  5483  331    1    RI
+## 3 1966 10317  307    1    MA</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, ]</code></pre></div>
-<pre><code>##    claims provider providerA logclaims
-## 1:  0.045    Other         1    -3.101
-## 2:  0.047    Other         1    -3.058
-## 3:  0.070    Other         1    -2.659</code></pre>
-</section><section id="row-subsets-different-to-data.frame" class="slide level2">
-<h2>Row subsets different to data.frame</h2>
+<pre><code>##    Year  Loss ALAE Pass State
+## 1: 1966  4970  407    2    FL
+## 2: 1966  5483  331    1    RI
+## 3: 1966 10317  307    1    MA</code></pre>
+</section><section id="row-subsets-different-from-data.frame" class="slide level2">
+<h2>Row subsets different from data.frame</h2>
 <ul>
 <li>Filter based on column name - less typing than data.frame</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[df<span class="op">$</span>provider <span class="op">==</span><span class="st"> &#39;A&#39;</span>, ], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##     claims provider providerA logclaims
-## 37   0.430        A         0    -0.844
-## 44   0.514        A         0    -0.666
-## 70   0.836        A         0    -0.179
-## 108  1.645        A         0     0.498
-## 113  1.700        A         0     0.531</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[provider <span class="op">==</span><span class="st"> &#39;A&#39;</span>, ], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##    claims provider providerA logclaims
-## 1:  0.430        A         0    -0.844
-## 2:  0.514        A         0    -0.666
-## 3:  0.836        A         0    -0.179
-## 4:  1.645        A         0     0.498
-## 5:  1.700        A         0     0.531</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[df<span class="op">$</span>State <span class="op">==</span><span class="st"> &#39;NY&#39;</span>, ], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    Year   Loss ALAE Pass State
+## 33 1966   4510  435    1    NY
+## 59 1966 968011 4084    1    NY
+## 62 1966   5914  650    3    NY
+## 63 1966  22052 2538    2    NY
+## 79 1966 200469 6712    1    NY</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[State <span class="op">==</span><span class="st"> &#39;NY&#39;</span>, ], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    Year   Loss ALAE Pass State
+## 1: 1966   4510  435    1    NY
+## 2: 1966 968011 4084    1    NY
+## 3: 1966   5914  650    3    NY
+## 4: 1966  22052 2538    2    NY
+## 5: 1966 200469 6712    1    NY</code></pre>
 </section><section id="row-subsets-different-to-data.frame---cont." class="slide level2">
 <h2>Row subsets different to data.frame - Cont.</h2>
 <ul>
@@ -614,112 +657,112 @@ df[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, 
 <li>Read more about secondary index in the <a href="https://cran.r-project.org/web/packages/data.table/vignettes/datatable-secondary-indices-and-auto-indexing.html">vignette</a></li>
 </ul></li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[<span class="st">&#39;A&#39;</span>, <span class="dt">on =</span> <span class="st">&#39;provider&#39;</span>], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##    claims provider providerA logclaims
-## 1:  0.430        A         0    -0.844
-## 2:  0.514        A         0    -0.666
-## 3:  0.836        A         0    -0.179
-## 4:  1.645        A         0     0.498
-## 5:  1.700        A         0     0.531</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[<span class="st">&#39;NY&#39;</span>, <span class="dt">on =</span> <span class="st">&#39;State&#39;</span>], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    Year   Loss ALAE Pass State
+## 1: 1966   4510  435    1    NY
+## 2: 1966 968011 4084    1    NY
+## 3: 1966   5914  650    3    NY
+## 4: 1966  22052 2538    2    NY
+## 5: 1966 200469 6712    1    NY</code></pre>
 </section><section id="column-selects---using-names" class="slide level2">
 <h2>Column selects - using names</h2>
 <ul>
 <li>Notice that <code>df</code> returns a vector instead of data.frame</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[, <span class="st">&#39;claims&#39;</span>], <span class="dv">5</span>)</code></pre></div>
-<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[, <span class="st">&#39;Loss&#39;</span>], <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1]  4970  5483 10317 10654 61374</code></pre>
 <ul>
 <li><code>dt</code> returns a single column data.table, <code>data.table</code> tries to be consistent in returning data.table object from user operation</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="st">&#39;claims&#39;</span>], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##    claims
-## 1:  0.045
-## 2:  0.047
-## 3:  0.070
-## 4:  0.075
-## 5:  0.077</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="st">&#39;Loss&#39;</span>], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##     Loss
+## 1:  4970
+## 2:  5483
+## 3: 10317
+## 4: 10654
+## 5: 61374</code></pre>
 </section><section id="column-selects---using-names---cont." class="slide level2">
 <h2>Column selects - using names - Cont.</h2>
 <ul>
 <li>To return a vector from a data.table, one can use the following</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[[<span class="st">&#39;claims&#39;</span>]], <span class="dv">5</span>)</code></pre></div>
-<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df<span class="op">$</span>claims, <span class="dv">5</span>)</code></pre></div>
-<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[[<span class="st">&#39;claims&#39;</span>]], <span class="dv">5</span>)</code></pre></div>
-<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt<span class="op">$</span>claims, <span class="dv">5</span>)</code></pre></div>
-<pre><code>## [1] 0.045 0.047 0.070 0.075 0.077</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[[<span class="st">&#39;Loss&#39;</span>]], <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1]  4970  5483 10317 10654 61374</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df<span class="op">$</span>Loss, <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1]  4970  5483 10317 10654 61374</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[[<span class="st">&#39;Loss&#39;</span>]], <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1]  4970  5483 10317 10654 61374</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt<span class="op">$</span>Loss, <span class="dv">5</span>)</code></pre></div>
+<pre><code>## [1]  4970  5483 10317 10654 61374</code></pre>
 </section><section id="column-selects---multiple-names" class="slide level2">
 <h2>Column selects - multiple names</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[, <span class="kw">c</span>(<span class="st">&#39;claims&#39;</span>, <span class="st">&#39;provider&#39;</span>)], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##   claims provider
-## 1  0.045    Other
-## 2  0.047    Other
-## 3  0.070    Other
-## 4  0.075    Other
-## 5  0.077    Other</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="kw">c</span>(<span class="st">&#39;claims&#39;</span>, <span class="st">&#39;provider&#39;</span>)], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##    claims provider
-## 1:  0.045    Other
-## 2:  0.047    Other
-## 3:  0.070    Other
-## 4:  0.075    Other
-## 5:  0.077    Other</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[, <span class="kw">c</span>(<span class="st">&#39;Loss&#39;</span>, <span class="st">&#39;ALAE&#39;</span>)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    Loss ALAE
+## 1  4970  407
+## 2  5483  331
+## 3 10317  307
+## 4 10654  217
+## 5 61374 1300</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="kw">c</span>(<span class="st">&#39;Loss&#39;</span>, <span class="st">&#39;ALAE&#39;</span>)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##     Loss ALAE
+## 1:  4970  407
+## 2:  5483  331
+## 3: 10317  307
+## 4: 10654  217
+## 5: 61374 1300</code></pre>
 </section><section id="column-selects---using-numbers" class="slide level2">
 <h2>Column selects - using numbers</h2>
 <ul>
 <li>Although selecting by column number is not good practice in general, it is supported to help data.frame users transition more smoothly to data.table</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(df[, <span class="dv">1</span><span class="op">:</span><span class="dv">3</span>], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##   claims provider providerA
-## 1  0.045    Other         1
-## 2  0.047    Other         1
-## 3  0.070    Other         1
-## 4  0.075    Other         1
-## 5  0.077    Other         1</code></pre>
+<pre><code>##   Year  Loss ALAE
+## 1 1966  4970  407
+## 2 1966  5483  331
+## 3 1966 10317  307
+## 4 1966 10654  217
+## 5 1966 61374 1300</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="dv">1</span><span class="op">:</span><span class="dv">3</span>], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##    claims provider providerA
-## 1:  0.045    Other         1
-## 2:  0.047    Other         1
-## 3:  0.070    Other         1
-## 4:  0.075    Other         1
-## 5:  0.077    Other         1</code></pre>
+<pre><code>##    Year  Loss ALAE
+## 1: 1966  4970  407
+## 2: 1966  5483  331
+## 3: 1966 10317  307
+## 4: 1966 10654  217
+## 5: 1966 61374 1300</code></pre>
 </section><section id="column-selects-different-to-data.frame---use-list" class="slide level2">
 <h2>Column selects different to data.frame - use list</h2>
 <ul>
 <li><code>.()</code> is an alias for <code>list()</code>, this shortens the syntax</li>
 <li>You don’t need to have quotation mark around the column names</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="kw">list</span>(claims, provider)], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##    claims provider
-## 1:  0.045    Other
-## 2:  0.047    Other
-## 3:  0.070    Other
-## 4:  0.075    Other
-## 5:  0.077    Other</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, .(claims, provider)], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##    claims provider
-## 1:  0.045    Other
-## 2:  0.047    Other
-## 3:  0.070    Other
-## 4:  0.075    Other
-## 5:  0.077    Other</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="kw">list</span>(Loss, ALAE)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##     Loss ALAE
+## 1:  4970  407
+## 2:  5483  331
+## 3: 10317  307
+## 4: 10654  217
+## 5: 61374 1300</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, .(Loss, ALAE)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##     Loss ALAE
+## 1:  4970  407
+## 2:  5483  331
+## 3: 10317  307
+## 4: 10654  217
+## 5: 61374 1300</code></pre>
 </section><section id="column-selects-different-to-data.table---variable-approach-with-mget-or-.." class="slide level2">
 <h2>Column selects different to data.table - variable approach with <code>mget</code> or <code>..</code></h2>
 <ul>
 <li>This is useful when you have several columns you want to select and don’t want to clutter your data.table operation</li>
 <li>Or you are passing variables in a function call</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cols_to_select &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;claims&#39;</span>, <span class="st">&#39;provider&#39;</span>, <span class="st">&#39;providerA&#39;</span>, <span class="st">&#39;logclaims&#39;</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cols_to_select &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;Year&#39;</span>, <span class="st">&#39;Loss&#39;</span>, <span class="st">&#39;ALAE&#39;</span>, <span class="st">&#39;State&#39;</span>)
 <span class="kw">head</span>(df[, cols_to_select], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##   claims provider providerA logclaims
-## 1  0.045    Other         1    -3.101
-## 2  0.047    Other         1    -3.058
-## 3  0.070    Other         1    -2.659
-## 4  0.075    Other         1    -2.590
-## 5  0.077    Other         1    -2.564</code></pre>
+<pre><code>##   Year  Loss ALAE State
+## 1 1966  4970  407    FL
+## 2 1966  5483  331    RI
+## 3 1966 10317  307    MA
+## 4 1966 10654  217    VA
+## 5 1966 61374 1300    SC</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#head(dt[, cols_to_select], 5) # because you can call column name directly, data.table will try to look for cols_to_select as a column in the table</span>
 <span class="co"># Error in `[.data.table`(dt, , cols_to_select) : j...</span></code></pre></div>
 </section><section id="column-selects-different-to-data.table---variable-approach-with-mget-or-..---cont." class="slide level2">
@@ -728,57 +771,234 @@ df[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, 
 <li>Use <code>mget</code> to get the column names in the correct scope</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, <span class="kw">mget</span>(cols_to_select)], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##    claims provider providerA logclaims
-## 1:  0.045    Other         1    -3.101
-## 2:  0.047    Other         1    -3.058
-## 3:  0.070    Other         1    -2.659
-## 4:  0.075    Other         1    -2.590
-## 5:  0.077    Other         1    -2.564</code></pre>
+<pre><code>##    Year  Loss ALAE State
+## 1: 1966  4970  407    FL
+## 2: 1966  5483  331    RI
+## 3: 1966 10317  307    MA
+## 4: 1966 10654  217    VA
+## 5: 1966 61374 1300    SC</code></pre>
 <ul>
 <li>Use <code>..</code> to achieve the same result</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, ..cols_to_select], <span class="dv">5</span>)</code></pre></div>
-<pre><code>##    claims provider providerA logclaims
-## 1:  0.045    Other         1    -3.101
-## 2:  0.047    Other         1    -3.058
-## 3:  0.070    Other         1    -2.659
-## 4:  0.075    Other         1    -2.590
-## 5:  0.077    Other         1    -2.564</code></pre>
+<pre><code>##    Year  Loss ALAE State
+## 1: 1966  4970  407    FL
+## 2: 1966  5483  331    RI
+## 3: 1966 10317  307    MA
+## 4: 1966 10654  217    VA
+## 5: 1966 61374 1300    SC</code></pre>
 </section></section>
-<section><section id="how-to-add-columns-to-a-data.table" class="titleslide slide level1"><h1>How to add columns to a data.table</h1></section><section id="add-columns" class="slide level2">
-<h2>Add columns</h2>
+<section><section id="how-to-add-columns-to-a-data.table" class="titleslide slide level1"><h1>How to add columns to a data.table</h1></section><section id="adding-and-deleting-columns-by-reference" class="slide level2">
+<h2>Adding and deleting columns by reference</h2>
 <ul>
-<li>Based on existing columns</li>
-<li>From vectors</li>
-<li>Summarize (mean, median, max, etc) with group by</li>
+<li>Like most data.table operations, adding columns are done by reference. Which means that each time a column is added or changed, there isn’t a need to copy the existing data frame and make the adjustment on the copy. This provides some optimization in terms of speed, and significant optimization in terms of memory, allowing data tables to be much larger yet “fit” in R’s memory. Setting column orders are also done by reference, for speed and memory purposes.</li>
 </ul>
-</section></section>
-<section><section id="how-to-make-data.table-even-faster" class="titleslide slide level1"><h1>How to make data.table even faster</h1></section><section id="update-by-reference" class="slide level2">
-<h2>Update by reference</h2>
+</section><section id="notation" class="slide level2">
+<h2><code>:=</code> notation</h2>
+<p>The operator used to edit columns in a data table is <code>:=</code>. Deleting a column is as simple as passing <code>NULL</code> as the column value.</p>
 <ul>
-<li><code>:=</code> notation</li>
-<li>set operation</li>
+<li>Caveat: The data.table package does not use as much lazy and non-standard evaluation as <code>dplyr</code>. Therefore, unlike <code>dplyr::mutate</code>, you can only reference an added column in a data.table after it has been assigned, not in the same call. However, as one can chain data.table calls, this is not really a serious issue.</li>
 </ul>
+</section><section id="add-new-column-based-on-existing-columns" class="slide level2">
+<h2>Add new column based on existing columns</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[, ALAE_P <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">round</span>(ALAE <span class="op">/</span><span class="st"> </span>Loss, <span class="dv">3</span>)]
+<span class="kw">head</span>(dt)</code></pre></div>
+<pre><code>##    Year  Loss ALAE Pass State ALAE_P
+## 1: 1966  4970  407    2    FL  0.082
+## 2: 1966  5483  331    1    RI  0.060
+## 3: 1966 10317  307    1    MA  0.030
+## 4: 1966 10654  217    1    VA  0.020
+## 5: 1966 61374 1300    2    SC  0.021
+## 6: 1966 12197 2124    1    WV  0.174</code></pre>
+</section><section id="reorder-columns-by-reference" class="slide level2">
+<h2>Reorder columns by reference</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setcolorder</span>(dt, <span class="kw">c</span>(<span class="st">&#39;Year&#39;</span>, <span class="st">&#39;Loss&#39;</span>, <span class="st">&#39;ALAE&#39;</span>, <span class="st">&#39;ALAE_P&#39;</span>, <span class="st">&#39;Pass&#39;</span>, <span class="st">&#39;State&#39;</span>))
+dt</code></pre></div>
+<pre><code>##          Year    Loss  ALAE ALAE_P Pass State
+##       1: 1966    4970   407  0.082    2    FL
+##       2: 1966    5483   331  0.060    1    RI
+##       3: 1966   10317   307  0.030    1    MA
+##       4: 1966   10654   217  0.020    1    VA
+##       5: 1966   61374  1300  0.021    2    SC
+##      ---                                     
+## 1004973: 2015    5722     2  0.000    1    NC
+## 1004974: 2015    1187   244  0.206    1    RI
+## 1004975: 2015    4729  2853  0.603    2    VA
+## 1004976: 2015  255422 21455  0.084    2    FL
+## 1004977: 2015 1281835  2497  0.002    1    WV</code></pre>
+</section><section id="delete-a-column" class="slide level2">
+<h2>Delete a column</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[, ALAE_P <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="ot">NULL</span>][]</code></pre></div>
+<pre><code>##          Year    Loss  ALAE Pass State
+##       1: 1966    4970   407    2    FL
+##       2: 1966    5483   331    1    RI
+##       3: 1966   10317   307    1    MA
+##       4: 1966   10654   217    1    VA
+##       5: 1966   61374  1300    2    SC
+##      ---                              
+## 1004973: 2015    5722     2    1    NC
+## 1004974: 2015    1187   244    1    RI
+## 1004975: 2015    4729  2853    2    VA
+## 1004976: 2015  255422 21455    2    FL
+## 1004977: 2015 1281835  2497    1    WV</code></pre>
+</section><section id="add-new-column-from-a-vector" class="slide level2">
+<h2>Add new column from a vector</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[, Region <span class="op">:</span><span class="er">=</span><span class="st"> </span>state.division[State <span class="op">==</span><span class="st"> </span>state.abb], by =<span class="st"> </span>State][]</code></pre></div>
+<pre><code>##          Year    Loss  ALAE Pass State         Region
+##       1: 1966    4970   407    2    FL South Atlantic
+##       2: 1966    5483   331    1    RI    New England
+##       3: 1966   10317   307    1    MA    New England
+##       4: 1966   10654   217    1    VA South Atlantic
+##       5: 1966   61374  1300    2    SC South Atlantic
+##      ---                                             
+## 1004973: 2015    5722     2    1    NC South Atlantic
+## 1004974: 2015    1187   244    1    RI    New England
+## 1004975: 2015    4729  2853    2    VA South Atlantic
+## 1004976: 2015  255422 21455    2    FL South Atlantic
+## 1004977: 2015 1281835  2497    1    WV South Atlantic</code></pre>
+</section><section id="summarize-mean-median-max-etc-with-group-by" class="slide level2">
+<h2>Summarize (mean, median, max, etc) with “group by”</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[, .(<span class="dt">Counts =</span> .N, <span class="dt">Avg =</span> <span class="kw">mean</span>(Loss), <span class="dt">Max =</span> <span class="kw">max</span>(Loss), <span class="dt">MedPass =</span> <span class="kw">median</span>(Pass)),
+   by =<span class="st"> </span>Region]</code></pre></div>
+<pre><code>##             Region Counts      Avg      Max MedPass
+## 1:  South Atlantic 472803 156829.7 14398043       1
+## 2:     New England 355219 158394.2  8456268       1
+## 3: Middle Atlantic 176955 156479.1  8557035       1</code></pre>
+</section><section id="summarize-by-multiple-columns" class="slide level2">
+<h2>Summarize by multiple columns</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, .(<span class="dt">Counts =</span> .N, <span class="dt">Avg =</span> <span class="kw">mean</span>(Loss), <span class="dt">Max =</span> <span class="kw">max</span>(Loss)),
+        <span class="dt">keyby =</span> <span class="kw">c</span>(<span class="st">&#39;Region&#39;</span>, <span class="st">&#39;Pass&#39;</span>)])</code></pre></div>
+<pre><code>##         Region Pass Counts      Avg     Max
+## 1: New England    1 216595 107121.1 8403760
+## 2: New England    2  83535 136043.0 8456268
+## 3: New England    3  28534 284892.8 7459513
+## 4: New England    4  10563 511985.8 8140141
+## 5: New England    5   8519 517472.3 7897216
+## 6: New England    6   7473 502181.6 6431055</code></pre>
+<ul>
+<li>We will see more of <code>keyby</code> later</li>
+</ul>
+</section><section id="list-notation" class="slide level2">
+<h2>list notation</h2>
+<ul>
+<li>When wanting to add or delete multiple columns in a data frame, it is easiest to use “functional” notation. In this case, the <code>:=</code> operator is added before a parenthetical list of column name–data pairs. Inside the parentheses, only a normal <code>=</code> is used, as the specialized assigment operator will be applied to each pair.</li>
+</ul>
+</section><section id="adding-columns" class="slide level2">
+<h2>Adding columns</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[, <span class="st">`</span><span class="dt">:=</span><span class="st">`</span> (<span class="dt">ALAE_P =</span> <span class="kw">round</span>(ALAE <span class="op">/</span><span class="st"> </span>Loss, <span class="dv">3</span>), <span class="dt">Multiple =</span> Pass <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>)]
+<span class="kw">head</span>(dt)</code></pre></div>
+<pre><code>##    Year  Loss ALAE Pass State         Region ALAE_P Multiple
+## 1: 1966  4970  407    2    FL South Atlantic  0.082     TRUE
+## 2: 1966  5483  331    1    RI    New England  0.060    FALSE
+## 3: 1966 10317  307    1    MA    New England  0.030    FALSE
+## 4: 1966 10654  217    1    VA South Atlantic  0.020    FALSE
+## 5: 1966 61374 1300    2    SC South Atlantic  0.021     TRUE
+## 6: 1966 12197 2124    1    WV South Atlantic  0.174    FALSE</code></pre>
+</section><section id="deleting-columns" class="slide level2">
+<h2>Deleting columns</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[, <span class="st">`</span><span class="dt">:=</span><span class="st">`</span> (<span class="dt">ALAE_P =</span> <span class="ot">NULL</span>, <span class="dt">Multiple =</span> <span class="ot">NULL</span>)]
+<span class="kw">head</span>(dt)</code></pre></div>
+<pre><code>##    Year  Loss ALAE Pass State         Region
+## 1: 1966  4970  407    2    FL South Atlantic
+## 2: 1966  5483  331    1    RI    New England
+## 3: 1966 10317  307    1    MA    New England
+## 4: 1966 10654  217    1    VA South Atlantic
+## 5: 1966 61374 1300    2    SC South Atlantic
+## 6: 1966 12197 2124    1    WV South Atlantic</code></pre>
 </section></section>
-<section><section id="how-to-join-tables-together-using-data.table" class="titleslide slide level1"><h1>How to join tables together using data.table</h1></section><section id="joins" class="slide level2">
+<section><section id="how-to-join-tables-together-using-data.table" class="titleslide slide level1"><h1>How to join tables together using data.table</h1></section><section id="keys" class="slide level2">
+<h2>Keys</h2>
+<ul>
+<li><p>One of the optimizations of data table is its implementation of an optimized radix sort. This is further enhanced when a key is set. When setting a key or keys, the actual order of the table is re-written to conform to the keys, making future searches blazingly fast.</p></li>
+<li><p>Create ancillary table</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">policy_dt &lt;-<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">Year =</span> years,
+                        <span class="dt">Policies =</span> <span class="kw">rnbinom</span>(<span class="kw">length</span>(years),
+                                           <span class="dt">mu =</span> <span class="dv">10000</span>, <span class="dt">size =</span> <span class="dv">100</span>))
+policy_dt &lt;-<span class="st"> </span><span class="kw">data.table</span>(policy_dt, <span class="dt">Premium =</span> 
+                          <span class="kw">round</span>(<span class="kw">rnorm</span>(<span class="kw">nrow</span>(policy_dt), <span class="dt">mean =</span> <span class="dv">100</span>, <span class="dt">sd =</span> <span class="dv">20</span>) <span class="op">*</span>
+<span class="st">                                  </span>policy_dt<span class="op">$</span>Policies, <span class="dv">0</span>))
+<span class="kw">head</span>(policy_dt)</code></pre></div>
+<pre><code>##    Year Policies Premium
+## 1: 1966    11272 1170711
+## 2: 1967    10282  980969
+## 3: 1968     9081  712755
+## 4: 1969    10224 1255788
+## 5: 1970    10382  951662
+## 6: 1971     8634  904854</code></pre>
+</section><section id="joins" class="slide level2">
 <h2>Joins</h2>
 <ul>
-<li>merge</li>
+<li>We want to merge the policy data with the loss data to get the overall loss ratio by year</li>
+<li>It will be fastest if there are shared key fields</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setkey</span>(dt, Year, State)
+<span class="kw">setkey</span>(policy_dt, Year)</code></pre></div>
+</section><section id="join" class="slide level2">
+<h2>Join</h2>
+<ul>
+<li>Details about specific kinds of joins and how to perform them are found in the data.table help documentation and vignettes.</li>
 <li><code>[</code> notation</li>
 </ul>
-</section><section id="append-multiple-data.frames-together-union" class="slide level2">
-<h2>Append multiple data.frames together (<code>Union</code>)</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">joint_dt &lt;-<span class="st"> </span>dt[policy_dt]
+<span class="kw">setkey</span>(joint_dt, Year, State)</code></pre></div>
+<ul>
+<li>merge</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">joint_dt2 &lt;-<span class="st"> </span><span class="kw">merge</span>(dt, policy_dt)
+<span class="kw">setkey</span>(joint_dt2, Year, State)
+<span class="kw">all.equal</span>(joint_dt, joint_dt2)</code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+</section><section id="set-operations-on-data.frames" class="slide level2">
+<h2>Set operations on data.frames</h2>
+<ul>
+<li>Split policy data into two overlapping and recombine:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">p1_dt &lt;-<span class="st"> </span>policy_dt[Year <span class="op">%in%</span><span class="st"> </span><span class="kw">seq</span>(<span class="dv">1966</span>, <span class="dv">1994</span>)]
+p2_dt &lt;-<span class="st"> </span>policy_dt[Year <span class="op">%in%</span><span class="st"> </span><span class="kw">seq</span>(<span class="dv">1985</span>, <span class="dv">2015</span>)]
+pT_dt &lt;-<span class="st"> </span><span class="kw">funion</span>(p1_dt, p2_dt)
+<span class="kw">setkey</span>(pT_dt, Year)
+<span class="kw">all.equal</span>(pT_dt, policy_dt)</code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pO_dt &lt;-<span class="st"> </span><span class="kw">fintersect</span>(p1_dt, p2_dt)
+<span class="kw">dim</span>(pO_dt)</code></pre></div>
+<pre><code>## [1] 10  3</code></pre>
 </section></section>
-<section><section id="how-to-do-a-sql-transform-and-back-in-data.table" class="titleslide slide level1"><h1>How to do a SQL <code>transform</code> (and back) in data.table</h1></section><section id="pivot-table-from-long-to-wide" class="slide level2">
+<section><section id="how-to-do-a-sql-transform-and-back-in-data.table" class="titleslide slide level1"><h1>How to do a SQL <code>transform</code> (and back) in data.table</h1></section><section id="reshaping-data.tables" class="slide level2">
+<h2>Reshaping data.tables</h2>
+<ul>
+<li>Package has very quick implementation of dcast and melt from reshape2</li>
+<li>For example, useful in ggplot for faceting LR and Count</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(LR, <span class="kw">aes</span>(<span class="dt">x =</span> Year, <span class="dt">y =</span> LR, <span class="dt">color =</span> Region)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>()</code></pre></div>
+<p><img src="data.table_primer_files/figure-revealjs/simpleplot-1.png" width="768" /> ## Pivot table from wide to long - melt</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">LR2 &lt;-<span class="st"> </span><span class="kw">melt</span>(LR, <span class="dt">measure.vars =</span> <span class="kw">c</span>(<span class="st">&#39;LR&#39;</span>, <span class="st">&#39;Count&#39;</span>))</code></pre></div>
+<pre><code>## Warning in melt.data.table(LR, measure.vars = c(&quot;LR&quot;, &quot;Count&quot;)):
+## &#39;measure.vars&#39; [LR, Count] are not all of the same type. By order of
+## hierarchy, the molten data value column will be of type &#39;double&#39;. All
+## measure variables not of type &#39;double&#39; will be coerced to. Check DETAILS
+## in ?melt.data.table for more on coercion.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(LR2, <span class="kw">aes</span>(<span class="dt">x =</span> Year, <span class="dt">y =</span> value, <span class="dt">color =</span> Region)) <span class="op">+</span><span class="st"> </span><span class="kw">stat_smooth</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>variable, <span class="dt">scales =</span> <span class="st">&#39;free_y&#39;</span>)</code></pre></div>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39;</code></pre>
+<p><img src="data.table_primer_files/figure-revealjs/melt-1.png" width="768" /></p>
+</section><section id="pivot-table-from-long-to-wide" class="slide level2">
 <h2>Pivot table from long to wide</h2>
 <ul>
 <li>dcast</li>
 </ul>
-</section><section id="pivot-table-from-wide-to-long" class="slide level2">
-<h2>Pivot table from wide to long</h2>
-<ul>
-<li>melt</li>
-</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">LR3 &lt;-<span class="st"> </span><span class="kw">dcast</span>(LR2, Year <span class="op">+</span><span class="st"> </span>Region <span class="op">+</span><span class="st"> </span>State <span class="op">~</span><span class="st"> </span>variable)
+<span class="kw">setkey</span>(LR3, <span class="st">&#39;Year&#39;</span>, <span class="st">&#39;Region&#39;</span>, <span class="st">&#39;State&#39;</span>)
+<span class="kw">all.equal</span>(LR, LR3)</code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(LR3)</code></pre></div>
+<pre><code>##    Year      Region State        LR Count
+## 1: 1966 New England    CT 0.1578179  1176
+## 2: 1966 New England    MA 0.1138696  1112
+## 3: 1966 New England    ME 0.1285288  1196
+## 4: 1966 New England    NH 0.1423237  1178
+## 5: 1966 New England    RI 0.1330101  1178
+## 6: 1966 New England    VT 0.1525566  1182</code></pre>
 </section></section>
 <section><section id="work-with-data.table-using-variables" class="titleslide slide level1"><h1>Work with data.table using variables</h1></section><section id="passing-variables-to-data.table" class="slide level2">
 <h2>Passing variables to data.table</h2>

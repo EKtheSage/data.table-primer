@@ -43,15 +43,16 @@ knitr::opts_chunk$set(echo = TRUE)
 Note, this next code block will install the `data.table` package if it is not already installed.
 
 ```{r}
+library(ggplot2)
 if (!require(data.table)) install.packages("data.table")
 library(data.table)
 ```
 
 # data.table is very similar to data.frame
 
-## Create tables and read data
+## Create tables
 This block creates a list of approximately one million auto claims allocated to 1966--2015, so all are assumed at ultimate. To test the speed of reading files into R, the file has already been created and saved as `SampleAutoLosses.csv`.
-```{r CreateTable, eval=FALSE}
+```{r CreateTable}
 set.seed(354)
 years <- seq(1966, 2015)
 counts <- rnbinom(length(years), size = 3000, mu = 20000)
@@ -77,35 +78,35 @@ writeStates <- state.abb[state.division %in%
 losses_df <- data.frame(Year = rep(years, counts), Loss = round(losses_df$Loss, 0),
                         ALAE = round(ALAE, 0), Pass = losses_df$Pass,
                         State = sample(writeStates, allCounts, replace = TRUE))
-rm(years, counts, allCounts, smallCounts, bigCounts, numPassBig, numPassSmall,
-   smallLosses, bigLosses, sLosses_df, bLosses_df, aLosses_df, ALAE_P, ALAE,
-   writeStates)
 ```
+
+## Read Data
 ```{r ReadTables}
 colClass <- c('integer', rep('numeric', 2), 'integer', 'character')
 df_T <- system.time(df <- read.csv('./SampleAutoLosses.csv', header = TRUE,
                              colClasses = colClass))
 dt_T <- system.time(dt <- fread('./SampleAutoLosses.csv', header = TRUE,
                              colClasses = colClass))
+df_T
+dt_T
 class(df)
 class(dt)
-setDT(df) # modifies df to become a data.table in place without copying
-class(df)
 ```
 - `setDT` is very useful when working with large dataset as it avoids copying. For more information, read the discussion on [stackoverflow](https://stackoverflow.com/questions/41917887/when-should-i-use-setdt-instead-of-data-table-to-create-a-data-table). 
+```{r SetDT}
+setDT(df) # modifies df to become a data.table in place without copying
+class(df)
+df <- as.data.frame(df)
+class(df)
+```
 
 ## Looking at the data.table
-
 ```{r}
-data('usmassBI')
-df <- usmassBI
 summary(df)
 summary(dt)
 ```
 
-
 ## Row subsets
-
 - row filters using slices `:` inside `[i, ]`
 ```{r}
 # returns row 1 to 3 
@@ -113,54 +114,46 @@ df[1:3, ]
 dt[1:3, ]
 ```
 
-
-## Row subsets different to data.frame
-
+## Row subsets different from data.frame
 - Filter based on column name - less typing than data.frame
 ```{r}
-head(df[df$provider == 'A', ], 5)
-head(dt[provider == 'A', ], 5)
+head(df[df$State == 'NY', ], 5)
+head(dt[State == 'NY', ], 5)
 ```
 
 ## Row subsets different to data.frame - Cont.
-
 - Using secondary index `on` notation - this is faster than normal subset above
     - Read more about secondary index in the [vignette](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-secondary-indices-and-auto-indexing.html)
 ```{r}
-head(dt['A', on = 'provider'], 5)
+head(dt['NY', on = 'State'], 5)
 ```
 
-
 ## Column selects - using names
-
 - Notice that `df` returns a vector instead of data.frame
 ```{r}
-head(df[, 'claims'], 5)
+head(df[, 'Loss'], 5)
 ```
 - `dt` returns a single column data.table, `data.table` tries to be consistent in returning data.table object from user operation
 ```{r}
-head(dt[, 'claims'], 5)
+head(dt[, 'Loss'], 5)
 ```
-## Column selects - using names - Cont.
 
+## Column selects - using names - Cont.
 - To return a vector from a data.table, one can use the following
 ```{r}
-head(df[['claims']], 5)
-head(df$claims, 5)
-head(dt[['claims']], 5)
-head(dt$claims, 5)
+head(df[['Loss']], 5)
+head(df$Loss, 5)
+head(dt[['Loss']], 5)
+head(dt$Loss, 5)
 ```
 
 ## Column selects - multiple names
-
 ```{r}
-head(df[, c('claims', 'provider')], 5)
-head(dt[, c('claims', 'provider')], 5)
+head(df[, c('Loss', 'ALAE')], 5)
+head(dt[, c('Loss', 'ALAE')], 5)
 ```
 
-
 ## Column selects - using numbers
-
 - Although selecting by column number is not good practice in general, it is supported to help data.frame users transition more smoothly to data.table
 ```{r}
 head(df[, 1:3], 5)
@@ -168,27 +161,23 @@ head(dt[, 1:3], 5)
 ```
 
 ## Column selects different to data.frame - use list
-
 - `.()` is an alias for `list()`, this shortens the syntax
 - You don't need to have quotation mark around the column names
 ```{r}
-head(dt[, list(claims, provider)], 5)
-head(dt[, .(claims, provider)], 5)
+head(dt[, list(Loss, ALAE)], 5)
+head(dt[, .(Loss, ALAE)], 5)
 ```
 
-
 ## Column selects different to data.table - variable approach with `mget` or `..`
-
 - This is useful when you have several columns you want to select and don't want to clutter your data.table operation
 - Or you are passing variables in a function call
 ```{r}
-cols_to_select <- c('claims', 'provider', 'providerA', 'logclaims')
+cols_to_select <- c('Year', 'Loss', 'ALAE', 'State')
 head(df[, cols_to_select], 5)
 #head(dt[, cols_to_select], 5) # because you can call column name directly, data.table will try to look for cols_to_select as a column in the table
 # Error in `[.data.table`(dt, , cols_to_select) : j...
 ```
 ## Column selects different to data.table - variable approach with `mget` or `..` - Cont.
-
 - Use `mget` to get the column names in the correct scope
 ```{r}
 head(dt[, mget(cols_to_select)], 5)
@@ -198,40 +187,147 @@ head(dt[, mget(cols_to_select)], 5)
 head(dt[, ..cols_to_select], 5)
 ```
 
-
 # How to add columns to a data.table
 
-## Add columns
+## Adding and deleting columns by reference
+- Like most data.table operations, adding columns are done by reference. Which means that each time a column is added or changed, there isn't a need to copy the existing data frame and make the adjustment on the copy. This provides some optimization in terms of speed, and significant optimization in terms of memory, allowing data tables to be much larger yet "fit" in R's memory.  Setting column orders are also done by reference, for speed and memory purposes.
 
-- Based on existing columns
-- From vectors
-- Summarize (mean, median, max, etc) with group by
+## `:=` notation
+The operator used to edit columns in a data table is `:=`. Deleting a column is as simple as passing `NULL` as the column  value.
 
-# How to make data.table even faster
+- Caveat: The data.table package does not use as much lazy and non-standard evaluation as `dplyr`. Therefore, unlike `dplyr::mutate`, you can only reference an added column in a data.table after it has been assigned, not in the same call. However, as one can chain data.table calls, this is not really a serious issue.
 
-## Update by reference
+## Add new column based on existing columns
+```{r AddCol1}
+dt[, ALAE_P := round(ALAE / Loss, 3)]
+head(dt)
+```
 
-- `:=` notation
-- set operation
+## Reorder columns by reference
+```{r ReOrderCol1}
+setcolorder(dt, c('Year', 'Loss', 'ALAE', 'ALAE_P', 'Pass', 'State'))
+dt
+```
+
+## Delete a column
+```{r DelCol1}
+dt[, ALAE_P := NULL][]
+```
+
+## Add new column from a vector
+```{r AddColVec}
+dt[, Region := state.division[State == state.abb], by = State][]
+```
+
+## Summarize (mean, median, max, etc) with "group by"
+```{r SummaryStats1}
+dt[, .(Counts = .N, Avg = mean(Loss), Max = max(Loss), MedPass = median(Pass)),
+   by = Region]
+````
+## Summarize by multiple columns
+```{r Summarize2}
+head(dt[, .(Counts = .N, Avg = mean(Loss), Max = max(Loss)),
+        keyby = c('Region', 'Pass')])
+```
+- We will see more of `keyby` later
+
+## list notation
+- When wanting to add or delete multiple columns in a data frame, it is easiest to use "functional" notation. In this case, the `:=` operator is added before a parenthetical list of column name--data pairs. Inside the parentheses, only a normal `=` is used, as the specialized assigment operator will be applied to each pair.
+
+## Adding columns
+```{r MultiAdd}
+dt[, `:=` (ALAE_P = round(ALAE / Loss, 3), Multiple = Pass > 1)]
+head(dt)
+```
+
+## Deleting columns
+```{r MultiDelete}
+dt[, `:=` (ALAE_P = NULL, Multiple = NULL)]
+head(dt)
+```
 
 # How to join tables together using data.table
+- data.table has implemented optimized joins. The `merge` functionality has been overloaded to take advantage of these optimizations. The canonical way to implement joins in data.table, however is through the `[` operator. The help files for data.table has extensive documentation of these features.
+
+## Keys
+- One of the optimizations of data table is its implementation of an optimized radix sort. This is further enhanced when a key is set. When setting a key or keys, the actual order of the table is re-written to conform to the keys, making future searches blazingly fast.
+
+- Create ancillary table
+```{r CreateAncillaryTables}
+policy_dt <- data.table(Year = years,
+                        Policies = rnbinom(length(years),
+                                           mu = 10000, size = 100))
+policy_dt <- data.table(policy_dt, Premium = 
+                          round(rnorm(nrow(policy_dt), mean = 100, sd = 20) *
+                                  policy_dt$Policies, 0))
+head(policy_dt)
+```
 
 ## Joins
+- We want to merge the policy data with the loss data to get the overall loss ratio by year
+- It will be fastest if there are shared key fields
+```{r key}
+setkey(dt, Year, State)
+setkey(policy_dt, Year)
+```
 
-- merge
+## Join
+- Details about specific kinds of joins and how to perform them are found in the data.table help documentation and vignettes.
 - `[` notation
+```{r [}
+joint_dt <- dt[policy_dt]
+setkey(joint_dt, Year, State)
+```
+- merge
+```{r merge}
+joint_dt2 <- merge(dt, policy_dt)
+setkey(joint_dt2, Year, State)
+all.equal(joint_dt, joint_dt2)
+```
 
-## Append multiple data.frames together (`Union`)
+## Set operations on data.frames
+- Split policy data into two overlapping and recombine:
+```{r setops}
+p1_dt <- policy_dt[Year %in% seq(1966, 1994)]
+p2_dt <- policy_dt[Year %in% seq(1985, 2015)]
+pT_dt <- funion(p1_dt, p2_dt)
+setkey(pT_dt, Year)
+all.equal(pT_dt, policy_dt)
+pO_dt <- fintersect(p1_dt, p2_dt)
+dim(pO_dt)
+```
 
-# How to do a SQL `transform` (and back) in data.table 
+# How to do a SQL `transform` (and back) in data.table
+- First create some wide data for analysis
+- keyby creates the groups using by, and then sets the keys to those groups
+```{r Wide}
+LR <- joint_dt[, .(LR = sum(Loss + ALAE) / sum(Premium),
+                   Count = .N), keyby = c('Year', 'Region', 'State')]
+head(LR)
+```
+
+## Reshaping data.tables
+- Package has very quick implementation of dcast and melt from reshape2
+- For example, useful in ggplot for faceting LR and Count
+```{r simpleplot}
+ggplot(LR, aes(x = Year, y = LR, color = Region)) + geom_line()
+```
+## Pivot table from wide to long
+- melt
+```{r melt}
+LR2 <- melt(LR, measure.vars = c('LR', 'Count'))
+ggplot(LR2, aes(x = Year, y = value, color = Region)) + stat_smooth() +
+  facet_wrap(~variable, scales = 'free_y')
+```
 
 ## Pivot table from long to wide
-
 - dcast
-
-## Pivot table from wide to long
-
-- melt
+```{r dcast}
+LR3 <- dcast(LR2, Year + Region + State ~ variable)
+setkey(LR3, 'Year', 'Region', 'State')
+all.equal(LR, LR3)
+head(LR3)
+```
 
 # Work with data.table using variables
 
