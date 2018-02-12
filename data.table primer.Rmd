@@ -37,23 +37,56 @@ knitr::opts_chunk$set(echo = TRUE)
 - Fastest in memory data manipulation tool in R
     - Include plot of benchmark?
     - Time is Money, Money is Power, Power is Pizza
-- Active community on stackoverflow, so your question is most likely answered already on it
+- Active community on StackOverflow, so your question is most likely answered already on it
 
 ## Load packages before we start
+Note, this next code block will install the `data.table` package if it is not already installed.
 
 ```{r}
-if (!require(pacman)) install.packages('pacman')
-if (!require(CASdatasets)) install.packages("CASdatasets", repos = "http://cas.uqam.ca/pub/R/")
-pacman::p_load(CASdatasets, data.table)
+if (!require(data.table)) install.packages("data.table")
+library(data.table)
 ```
 
 # data.table is very similar to data.frame
 
-## Create tables
-```{r}
-data('usmassBI')
-df <- usmassBI
-dt <- data.table(df)
+## Create tables and read data
+This block creates a list of approximately one million auto claims allocated to 1966--2015, so all are assumed at ultimate. To test the speed of reading files into R, the file has already been created and saved as `SampleAutoLosses.csv`.
+```{r CreateTable, eval=FALSE}
+set.seed(354)
+years <- seq(1966, 2015)
+counts <- rnbinom(length(years), size = 3000, mu = 20000)
+allCounts <- sum(counts)
+smallCounts <- floor(0.7 * allCounts)
+bigCounts <- allCounts - smallCounts
+numPassBig <- sample(seq_len(6), bigCounts, replace = TRUE,
+                     prob = c(0.4, 0.2, 0.15, 0.1, 0.08, 0.07))
+numPassSmall <- sample(seq_len(3), smallCounts, replace = TRUE,
+                       prob = c(0.7, 0.25, .05))
+smallLosses <- rgamma(smallCounts, shape = 4, scale = 2500)
+bigLosses <- rgamma(bigCounts, shape = 0.5, scale = 1e6)
+sLosses_df <- data.frame(Loss = smallLosses, Pass = numPassSmall)
+bLosses_df <- data.frame(Loss = bigLosses, Pass = numPassBig)
+aLosses_df <- rbind(sLosses_df, bLosses_df)
+losses_df <- aLosses_df[sample(nrow(aLosses_df)), ]
+row.names(losses_df) <- NULL
+ALAE_P = rlnorm(allCounts, meanlog = log(0.1) - log(5) / 2,
+                sdlog = sqrt(log(5)))
+ALAE = losses_df$Loss * ALAE_P
+writeStates <- state.abb[state.division %in%
+                           c('New England', 'Middle Atlantic', 'South Atlantic')]
+losses_df <- data.frame(Year = rep(years, counts), Loss = round(losses_df$Loss, 0),
+                        ALAE = round(ALAE, 0), Pass = losses_df$Pass,
+                        State = sample(writeStates, allCounts, replace = TRUE))
+rm(years, counts, allCounts, smallCounts, bigCounts, numPassBig, numPassSmall,
+   smallLosses, bigLosses, sLosses_df, bLosses_df, aLosses_df, ALAE_P, ALAE,
+   writeStates)
+```
+```{r ReadTables}
+colClass <- c('integer', rep('numeric', 2), 'integer', 'character')
+df_T <- system.time(df <- read.csv('./SampleAutoLosses.csv', header = TRUE,
+                             colClasses = colClass))
+dt_T <- system.time(dt <- fread('./SampleAutoLosses.csv', header = TRUE,
+                             colClasses = colClass))
 class(df)
 class(dt)
 setDT(df) # modifies df to become a data.table in place without copying
