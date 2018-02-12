@@ -565,10 +565,10 @@ dt_T &lt;-<span class="st"> </span><span class="kw">system.time</span>(dt &lt;-<
                              <span class="dt">colClasses =</span> colClass))
 df_T</code></pre></div>
 <pre><code>##    user  system elapsed 
-##    2.18    0.18    2.35</code></pre>
+##    2.23    0.15    2.39</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt_T</code></pre></div>
 <pre><code>##    user  system elapsed 
-##    0.73    0.01    0.75</code></pre>
+##    0.73    0.02    0.75</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">class</span>(df)</code></pre></div>
 <pre><code>## [1] &quot;data.frame&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">class</span>(dt)</code></pre></div>
@@ -858,8 +858,8 @@ dt</code></pre></div>
 ## 1004977: 2015 1281835  2497    1    WV South Atlantic</code></pre>
 </section><section id="summarize-mean-median-max-etc-with-group-by" class="slide level2">
 <h2>Summarize (mean, median, max, etc) with “group by”</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[, .(<span class="dt">Counts =</span> .N, <span class="dt">Avg =</span> <span class="kw">mean</span>(Loss), <span class="dt">Max =</span> <span class="kw">max</span>(Loss), <span class="dt">MedPass =</span> <span class="kw">median</span>(Pass)),
-   by =<span class="st"> </span>Region]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt[, .(<span class="dt">Counts =</span> .N, <span class="dt">Avg =</span> <span class="kw">mean</span>(Loss), <span class="dt">Max =</span> <span class="kw">max</span>(Loss),
+       <span class="dt">MedPass =</span> <span class="kw">median</span>(Pass)), by =<span class="st"> </span>Region]</code></pre></div>
 <pre><code>##             Region Counts      Avg      Max MedPass
 ## 1:  South Atlantic 472803 156829.7 14398043       1
 ## 2:     New England 355219 158394.2  8456268       1
@@ -909,15 +909,19 @@ dt</code></pre></div>
 <section><section id="how-to-join-tables-together-using-data.table" class="titleslide slide level1"><h1>How to join tables together using data.table</h1></section><section id="keys" class="slide level2">
 <h2>Keys</h2>
 <ul>
-<li><p>One of the optimizations of data table is its implementation of an optimized radix sort. This is further enhanced when a key is set. When setting a key or keys, the actual order of the table is re-written to conform to the keys, making future searches blazingly fast.</p></li>
-<li><p>Create ancillary table</p></li>
+<li>One of the optimizations of data table is its implementation of an optimized radix sort. This is further enhanced when a key is set. When setting a key or keys, the actual order of the table is re-written to conform to the keys, making future searches blazingly fast.</li>
+</ul>
+</section><section class="slide level2">
+
+<ul>
+<li>Create ancillary table</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">policy_dt &lt;-<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">Year =</span> years,
                         <span class="dt">Policies =</span> <span class="kw">rnbinom</span>(<span class="kw">length</span>(years),
                                            <span class="dt">mu =</span> <span class="dv">10000</span>, <span class="dt">size =</span> <span class="dv">100</span>))
 policy_dt &lt;-<span class="st"> </span><span class="kw">data.table</span>(policy_dt, <span class="dt">Premium =</span> 
-                          <span class="kw">round</span>(<span class="kw">rnorm</span>(<span class="kw">nrow</span>(policy_dt), <span class="dt">mean =</span> <span class="dv">100</span>, <span class="dt">sd =</span> <span class="dv">20</span>) <span class="op">*</span>
-<span class="st">                                  </span>policy_dt<span class="op">$</span>Policies, <span class="dv">0</span>))
+                          <span class="kw">round</span>(<span class="kw">rnorm</span>(<span class="kw">nrow</span>(policy_dt), <span class="dt">mean =</span> <span class="dv">100</span>,
+                                      <span class="dt">sd =</span> <span class="dv">20</span>) <span class="op">*</span><span class="st"> </span>policy_dt<span class="op">$</span>Policies, <span class="dv">0</span>))
 <span class="kw">head</span>(policy_dt)</code></pre></div>
 <pre><code>##    Year Policies Premium
 ## 1: 1966    11272 1170711
@@ -970,18 +974,38 @@ pT_dt &lt;-<span class="st"> </span><span class="kw">funion</span>(p1_dt, p2_dt)
 <li>Package has very quick implementation of dcast and melt from reshape2</li>
 <li>For example, useful in ggplot for faceting LR and Count</li>
 </ul>
+</section><section id="simple-plot" class="slide level2">
+<h2>Simple plot</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(LR, <span class="kw">aes</span>(<span class="dt">x =</span> Year, <span class="dt">y =</span> LR, <span class="dt">color =</span> Region)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>()</code></pre></div>
-<p><img src="data.table_primer_files/figure-revealjs/simpleplot-1.png" width="768" /> ## Pivot table from wide to long - melt</p>
+<p><img src="data.table_primer_files/figure-revealjs/simpleplot-1.png" width="768" /></p>
+</section><section id="pivot-table-from-wide-to-long" class="slide level2">
+<h2>Pivot table from wide to long</h2>
+<ul>
+<li>melt</li>
+</ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">LR2 &lt;-<span class="st"> </span><span class="kw">melt</span>(LR, <span class="dt">measure.vars =</span> <span class="kw">c</span>(<span class="st">&#39;LR&#39;</span>, <span class="st">&#39;Count&#39;</span>))</code></pre></div>
 <pre><code>## Warning in melt.data.table(LR, measure.vars = c(&quot;LR&quot;, &quot;Count&quot;)):
 ## &#39;measure.vars&#39; [LR, Count] are not all of the same type. By order of
 ## hierarchy, the molten data value column will be of type &#39;double&#39;. All
 ## measure variables not of type &#39;double&#39; will be coerced to. Check DETAILS
 ## in ?melt.data.table for more on coercion.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(LR2)</code></pre></div>
+<pre><code>##    Year      Region State variable     value
+## 1: 1966 New England    CT       LR 0.1578179
+## 2: 1966 New England    MA       LR 0.1138696
+## 3: 1966 New England    ME       LR 0.1285288
+## 4: 1966 New England    NH       LR 0.1423237
+## 5: 1966 New England    RI       LR 0.1330101
+## 6: 1966 New England    VT       LR 0.1525566</code></pre>
+</section><section class="slide level2">
+
+<ul>
+<li>Now that data is melted, call faceted plot</li>
+</ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(LR2, <span class="kw">aes</span>(<span class="dt">x =</span> Year, <span class="dt">y =</span> value, <span class="dt">color =</span> Region)) <span class="op">+</span><span class="st"> </span><span class="kw">stat_smooth</span>() <span class="op">+</span>
 <span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>variable, <span class="dt">scales =</span> <span class="st">&#39;free_y&#39;</span>)</code></pre></div>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39;</code></pre>
-<p><img src="data.table_primer_files/figure-revealjs/melt-1.png" width="768" /></p>
+<p><img src="data.table_primer_files/figure-revealjs/facetplot-1.png" width="768" /></p>
 </section><section id="pivot-table-from-long-to-wide" class="slide level2">
 <h2>Pivot table from long to wide</h2>
 <ul>

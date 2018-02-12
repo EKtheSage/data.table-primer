@@ -221,8 +221,8 @@ dt[, Region := state.division[State == state.abb], by = State][]
 
 ## Summarize (mean, median, max, etc) with "group by"
 ```{r SummaryStats1}
-dt[, .(Counts = .N, Avg = mean(Loss), Max = max(Loss), MedPass = median(Pass)),
-   by = Region]
+dt[, .(Counts = .N, Avg = mean(Loss), Max = max(Loss),
+       MedPass = median(Pass)), by = Region]
 ````
 ## Summarize by multiple columns
 ```{r Summarize2}
@@ -252,14 +252,16 @@ head(dt)
 ## Keys
 - One of the optimizations of data table is its implementation of an optimized radix sort. This is further enhanced when a key is set. When setting a key or keys, the actual order of the table is re-written to conform to the keys, making future searches blazingly fast.
 
+----
+
 - Create ancillary table
 ```{r CreateAncillaryTables}
 policy_dt <- data.table(Year = years,
                         Policies = rnbinom(length(years),
                                            mu = 10000, size = 100))
 policy_dt <- data.table(policy_dt, Premium = 
-                          round(rnorm(nrow(policy_dt), mean = 100, sd = 20) *
-                                  policy_dt$Policies, 0))
+                          round(rnorm(nrow(policy_dt), mean = 100,
+                                      sd = 20) * policy_dt$Policies, 0))
 head(policy_dt)
 ```
 
@@ -278,6 +280,7 @@ setkey(policy_dt, Year)
 joint_dt <- dt[policy_dt]
 setkey(joint_dt, Year, State)
 ```
+
 - merge
 ```{r merge}
 joint_dt2 <- merge(dt, policy_dt)
@@ -309,13 +312,22 @@ head(LR)
 ## Reshaping data.tables
 - Package has very quick implementation of dcast and melt from reshape2
 - For example, useful in ggplot for faceting LR and Count
+
+##Simple plot
 ```{r simpleplot}
 ggplot(LR, aes(x = Year, y = LR, color = Region)) + geom_line()
 ```
+
 ## Pivot table from wide to long
-- melt
+- melt 
 ```{r melt}
 LR2 <- melt(LR, measure.vars = c('LR', 'Count'))
+head(LR2)
+```
+
+----
+- Now that data is melted, call faceted plot
+```{r facetplot}
 ggplot(LR2, aes(x = Year, y = value, color = Region)) + stat_smooth() +
   facet_wrap(~variable, scales = 'free_y')
 ```
