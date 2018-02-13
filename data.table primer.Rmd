@@ -173,6 +173,19 @@ head(dt[, ..cols_to_select], 5)
 - Based on existing columns
 - From vectors
 - Summarize (mean, median, max, etc) with group by
+```{r}
+cols_to_summarize<-c('claims','logclaims')
+cols_to_group<-c('provider')
+dt[,
+   lapply(mget(cols_to_summarize),mean),
+   by=cols_to_group]
+
+#To add teh columns to the items directly to the original, we again leveragel :=
+dt[,
+   paste("average",cols_to_summarize,sep=""):=lapply(mget(cols_to_summarize),mean),
+   by=cols_to_group]
+head(dt)
+```
 
 # How to make data.table even faster
 
