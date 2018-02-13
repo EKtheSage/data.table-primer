@@ -36,12 +36,12 @@ knitr::opts_chunk$set(echo = TRUE)
 - Intuitive syntax of `[i = where, j = select, by = group by, ...]` is similar to SQL `where, select, group by` statements
 - Fastest in memory data manipulation tool in R
     - Include plot of benchmark?
-    - Time is Money, Money is Power, Power is Pizza
-- Active community on stackoverflow, so your question is most likely answered already on it
+    - ![](./imag/time.png)
+- Active community on stackoverflow, so your questions are most likely answered already
 
 ## Load packages before we start
 
-```{r}
+```{r, message=FALSE}
 if (!require(pacman)) install.packages('pacman')
 if (!require(CASdatasets)) install.packages("CASdatasets", repos = "http://cas.uqam.ca/pub/R/")
 pacman::p_load(CASdatasets, data.table)
@@ -148,12 +148,19 @@ head(dt[, .(claims, provider)], 5)
 
 - This is useful when you have several columns you want to select and don't want to clutter your data.table operation
 - Or you are passing variables in a function call
-```{r}
+```{r, }
 cols_to_select <- c('claims', 'provider', 'providerA', 'logclaims')
 head(df[, cols_to_select], 5)
-#head(dt[, cols_to_select], 5) # because you can call column name directly, data.table will try to look for cols_to_select as a column in the table
+```
+
+- The same call to `data.table` doesn't work
+```{r, eval=FALSE}
+head(dt[, cols_to_select], 5) 
+# because you can call column name directly, 
+# data.table will try to look for cols_to_select as a column in the table
 # Error in `[.data.table`(dt, , cols_to_select) : j...
 ```
+
 ## Column selects different to data.table - variable approach with `mget` or `..` - Cont.
 
 - Use `mget` to get the column names in the correct scope
@@ -168,30 +175,90 @@ head(dt[, ..cols_to_select], 5)
 
 # How to add columns to a data.table
 
-## Add columns
-
-- Based on existing columns
-- From vectors
-- Summarize (mean, median, max, etc) with group by
+## Add columns from existing columns
 ```{r}
-cols_to_summarize<-c('claims','logclaims')
-cols_to_group<-c('provider')
-dt[,
-   lapply(mget(cols_to_summarize),mean),
-   by=cols_to_group]
+df$claims_mean <- mean(df$claims)
+df$logclaims_mean <- mean(df$logclaims)
+head(df, 5)
 
-#To add teh columns to the items directly to the original, we again leveragel :=
-dt[,
-   paste("average",cols_to_summarize,sep=""):=lapply(mget(cols_to_summarize),mean),
-   by=cols_to_group]
-head(dt)
+head(dt[, .(claims_mean = mean(claims),
+            logclaims_mean = mean(logclaims))], 5)
+
+```
+
+## Add columns from vectors
+
+```{r}
+claims_mean_vec <- mean(dt$claims)
+logclaims_mean_vec <- mean(dt$logclaims)
+
+head(dt[, .(claims_mean = claims_mean_vec,
+            logclaims_mean = logclaims_mean_vec)], 5)
+```
+
+## Add columns using `lapply`, `.SD`, and `.SDcols`
+- You use `.SD` and `.SDcols` together
+- Below, you apply the mean function over the **S**ubset of the **D**ata.table
+- Which subset? You specify them in `.SDcols`
+```{r}
+cols_to_summarize <- c('claims', 'logclaims')
+head(dt[, lapply(.SD, mean), .SDcols = cols_to_summarize], 5)
+```
+
+## Add columns by group using `lapply` and `by`
+```{r}
+cols_to_summarize <- c('claims', 'logclaims')
+cols_to_group <- c('provider')
+head(dt[, lapply(mget(cols_to_summarize),mean), by = cols_to_group], 5)
+head(dt[, lapply(.SD,mean), .SDcols = cols_to_summarize, by = cols_to_group], 5)
 ```
 
 # How to make data.table even faster
 
+## The less effecient way - `<-` notation
+
+- If you looked at 'dt' in our previous slides after we added columns, you would not have seen the new columns
+- To permanently add columns to the original table as a `data.frame`, one would use the `<-` notation
+- `<-` essentially allocates a copy of the original table in memory, which would be troublesome when you have a big table!
+```{r}
+dt <- dt[, .(claims_mean = mean(claims),
+            logclaims_mean = mean(logclaims))]
+```
+
+```{r, message=FALSE}
+df <- usmassBI
+dt <- data.table(df)
+```
+
+## The `:=` notation
+
+- Instead, we should use `:=` whenever possible, to update tables in place without copying
+- You can also use `.SD` and `.SDcols` as described previouly
+```{r}
+#To add the columns to the items directly to the original, we leverage :=
+cols_to_summarize <- c('claims', 'logclaims')
+cols_to_group <- c('provider')
+
+dt[, paste0("average", cols_to_summarize) := lapply(mget(cols_to_summarize), mean), by = cols_to_group]
+head(dt, 5)
+```
+
+## The `:=` notation - Cont.
+
+- Use ``:=`` form, which allows more commenting in the code
+```{r}
+
+dt[, `:=` (
+  claims_mean = mean(claims), # mean of claims
+  claims_sd = sd(claims) # standard deviation of claims
+), by = cols_to_group]
+
+head(dt, 5)
+```
+
+
 ## Update by reference
 
-- `:=` notation
 - set operation
 
 # How to join tables together using data.table

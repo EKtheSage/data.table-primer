@@ -516,25 +516,15 @@ document.getElementsByTagName('head')[0].appendChild(style);
 <li>Fastest in memory data manipulation tool in R
 <ul>
 <li>Include plot of benchmark?</li>
-<li>Time is Money, Money is Power, Power is Pizza</li>
+<li><img src="imag/time.png" /></li>
 </ul></li>
-<li>Active community on stackoverflow, so your question is most likely answered already on it</li>
+<li>Active community on stackoverflow, so your questions are most likely answered already</li>
 </ul>
 </section><section id="load-packages-before-we-start" class="slide level2">
 <h2>Load packages before we start</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(pacman)) <span class="kw">install.packages</span>(<span class="st">&#39;pacman&#39;</span>)</code></pre></div>
-<pre><code>## Loading required package: pacman</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(CASdatasets)) <span class="kw">install.packages</span>(<span class="st">&quot;CASdatasets&quot;</span>, <span class="dt">repos =</span> <span class="st">&quot;http://cas.uqam.ca/pub/R/&quot;</span>)</code></pre></div>
-<pre><code>## Loading required package: CASdatasets</code></pre>
-<pre><code>## Loading required package: xts</code></pre>
-<pre><code>## Loading required package: zoo</code></pre>
-<pre><code>## 
-## Attaching package: &#39;zoo&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     as.Date, as.Date.numeric</code></pre>
-<pre><code>## Loading required package: sp</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pacman<span class="op">::</span><span class="kw">p_load</span>(CASdatasets, data.table)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(pacman)) <span class="kw">install.packages</span>(<span class="st">&#39;pacman&#39;</span>)
+<span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(CASdatasets)) <span class="kw">install.packages</span>(<span class="st">&quot;CASdatasets&quot;</span>, <span class="dt">repos =</span> <span class="st">&quot;http://cas.uqam.ca/pub/R/&quot;</span>)
+pacman<span class="op">::</span><span class="kw">p_load</span>(CASdatasets, data.table)</code></pre></div>
 </section></section>
 <section><section id="data.table-is-very-similar-to-data.frame" class="titleslide slide level1"><h1>data.table is very similar to data.frame</h1></section><section id="create-tables" class="slide level2">
 <h2>Create tables</h2>
@@ -720,7 +710,12 @@ df[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, 
 ## 3  0.070    Other         1    -2.659
 ## 4  0.075    Other         1    -2.590
 ## 5  0.077    Other         1    -2.564</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#head(dt[, cols_to_select], 5) # because you can call column name directly, data.table will try to look for cols_to_select as a column in the table</span>
+<ul>
+<li>The same call to <code>data.table</code> doesn’t work</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, cols_to_select], <span class="dv">5</span>) 
+<span class="co"># because you can call column name directly, </span>
+<span class="co"># data.table will try to look for cols_to_select as a column in the table</span>
 <span class="co"># Error in `[.data.table`(dt, , cols_to_select) : j...</span></code></pre></div>
 </section><section id="column-selects-different-to-data.table---variable-approach-with-mget-or-..---cont." class="slide level2">
 <h2>Column selects different to data.table - variable approach with <code>mget</code> or <code>..</code> - Cont.</h2>
@@ -745,13 +740,54 @@ df[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, 
 ## 4:  0.075    Other         1    -2.590
 ## 5:  0.077    Other         1    -2.564</code></pre>
 </section></section>
-<section><section id="how-to-add-columns-to-a-data.table" class="titleslide slide level1"><h1>How to add columns to a data.table</h1></section><section id="add-columns" class="slide level2">
-<h2>Add columns</h2>
+<section><section id="how-to-add-columns-to-a-data.table" class="titleslide slide level1"><h1>How to add columns to a data.table</h1></section><section id="add-columns-from-existing-columns" class="slide level2">
+<h2>Add columns from existing columns</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df<span class="op">$</span>claims_mean &lt;-<span class="st"> </span><span class="kw">mean</span>(df<span class="op">$</span>claims)
+df<span class="op">$</span>logclaims_mean &lt;-<span class="st"> </span><span class="kw">mean</span>(df<span class="op">$</span>logclaims)
+<span class="kw">head</span>(df, <span class="dv">5</span>)</code></pre></div>
+<pre><code>##   claims provider providerA logclaims claims_mean logclaims_mean
+## 1  0.045    Other         1    -3.101    2.830006      0.6225057
+## 2  0.047    Other         1    -3.058    2.830006      0.6225057
+## 3  0.070    Other         1    -2.659    2.830006      0.6225057
+## 4  0.075    Other         1    -2.590    2.830006      0.6225057
+## 5  0.077    Other         1    -2.564    2.830006      0.6225057</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(dt[, .(<span class="dt">claims_mean =</span> <span class="kw">mean</span>(claims),
+            <span class="dt">logclaims_mean =</span> <span class="kw">mean</span>(logclaims))], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims_mean logclaims_mean
+## 1:    2.830006      0.6225057</code></pre>
+</section><section id="add-columns-from-vectors" class="slide level2">
+<h2>Add columns from vectors</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">claims_mean_vec &lt;-<span class="st"> </span><span class="kw">mean</span>(dt<span class="op">$</span>claims)
+logclaims_mean_vec &lt;-<span class="st"> </span><span class="kw">mean</span>(dt<span class="op">$</span>logclaims)
+
+<span class="kw">head</span>(dt[, .(<span class="dt">claims_mean =</span> claims_mean_vec,
+            <span class="dt">logclaims_mean =</span> logclaims_mean_vec)], <span class="dv">5</span>)</code></pre></div>
+<pre><code>##    claims_mean logclaims_mean
+## 1:    2.830006      0.6225057</code></pre>
 <ul>
-<li>Based on existing columns</li>
 <li>From vectors</li>
 <li>Summarize (mean, median, max, etc) with group by</li>
 </ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cols_to_summarize&lt;-<span class="kw">c</span>(<span class="st">&#39;claims&#39;</span>,<span class="st">&#39;logclaims&#39;</span>)
+cols_to_group&lt;-<span class="kw">c</span>(<span class="st">&#39;provider&#39;</span>)
+dt[,
+   <span class="kw">lapply</span>(<span class="kw">mget</span>(cols_to_summarize),mean),
+   by=cols_to_group]</code></pre></div>
+<pre><code>##    provider   claims logclaims
+## 1:    Other 2.697717 0.4807132
+## 2:        A 3.303461 1.1299737</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#To add teh columns to the items directly to the original, we again leveragel :=</span>
+dt[,
+   <span class="kw">paste</span>(<span class="st">&quot;average&quot;</span>,cols_to_summarize,<span class="dt">sep=</span><span class="st">&quot;&quot;</span>)<span class="op">:</span><span class="er">=</span><span class="kw">lapply</span>(<span class="kw">mget</span>(cols_to_summarize),mean),
+   by=cols_to_group]
+<span class="kw">head</span>(dt)</code></pre></div>
+<pre><code>##    claims provider providerA logclaims averageclaims averagelogclaims
+## 1:  0.045    Other         1    -3.101      2.697717        0.4807132
+## 2:  0.047    Other         1    -3.058      2.697717        0.4807132
+## 3:  0.070    Other         1    -2.659      2.697717        0.4807132
+## 4:  0.075    Other         1    -2.590      2.697717        0.4807132
+## 5:  0.077    Other         1    -2.564      2.697717        0.4807132
+## 6:  0.092    Other         1    -2.386      2.697717        0.4807132</code></pre>
 </section></section>
 <section><section id="how-to-make-data.table-even-faster" class="titleslide slide level1"><h1>How to make data.table even faster</h1></section><section id="update-by-reference" class="slide level2">
 <h2>Update by reference</h2>
