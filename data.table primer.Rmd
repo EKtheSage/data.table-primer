@@ -3,43 +3,63 @@ title: "data.table primer"
 author: "Ethan Kang"
 date: "February 4, 2018"
 output: 
-  revealjs::revealjs_presentation:
-    self_contained: false
-    reveal_plugins: ['chalkboard', 'menu']
-    theme: sky
-    highlight: pygments
-    reveal_options:
-      menu:
-        numbers: true
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
 ---
 
 ```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # data.table introduction for actuaries
 
-## Agenda
+---
+
+# Agenda
 
 - What is data.table?
 - Why you should learn it?
 - data.table features in depth
 
-## data.table
+---
+
+# data.table
 
 - A package that does tablular data manipulation
 - data.table inherits from data.frame in R
 - In memory computation provides fast data processing speed
 
-## Benefits of using data.table
+---
+
+# Benefits of using data.table
 
 - Intuitive syntax of `[i = where, j = select, by = group by, ...]` is similar to SQL `where, select, group by` statements
-- Fastest in memory data manipulation tool in R
-    - Include plot of benchmark?
-    - ![](./imag/time.png)
-- Active community on stackoverflow, so your questions are most likely answered already
 
-## Load packages before we start
+--
+
+
+- Fastest in memory data manipulation tool in R
+
+--
+
+    - Include plot of benchmark?
+    
+--
+
+    - ![](./imag/time.png)
+
+--
+
+- Active community on StackOverflow, so your questions are most likely answered already
+
+---
+
+# Load packages before we start
 
 ```{r, message=FALSE}
 if (!require(pacman)) install.packages('pacman')
@@ -47,9 +67,12 @@ if (!require(CASdatasets)) install.packages("CASdatasets", repos = "http://cas.u
 pacman::p_load(CASdatasets, data.table)
 ```
 
+---
 # data.table is very similar to data.frame
 
-## Create tables
+---
+
+# Create tables
 ```{r}
 data('usmassBI')
 df <- usmassBI
@@ -61,7 +84,9 @@ class(df)
 ```
 - `setDT` is very useful when working with large dataset as it avoids copying. For more information, read the discussion on [stackoverflow](https://stackoverflow.com/questions/41917887/when-should-i-use-setdt-instead-of-data-table-to-create-a-data-table). 
 
-## Looking at the data.table
+---
+
+# Looking at the data.table
 
 ```{r}
 data('usmassBI')
@@ -70,8 +95,9 @@ summary(df)
 summary(dt)
 ```
 
+---
 
-## Row subsets
+# Row subsets
 
 - row filters using slices `:` inside `[i, ]`
 ```{r}
@@ -80,25 +106,36 @@ df[1:3, ]
 dt[1:3, ]
 ```
 
+---
 
-## Row subsets different to data.frame
+# Row subsets different to data.frame
 
 - Filter based on column name - less typing than data.frame
 ```{r}
 head(df[df$provider == 'A', ], 5)
+```
+
+- data.table optimizes native R syntax for auto-indexing, which is significantly faster than above
+- Auto indexing only works for single column subset currently (may change in the future)
+```{r}
 head(dt[provider == 'A', ], 5)
 ```
 
-## Row subsets different to data.frame - Cont.
+---
 
-- Using secondary index `on` notation - this is faster than normal subset above
+# Row subsets different to data.frame - Cont.
+
+- Using secondary index `on` notation
+    - This is similar to previous slide, but can work on multiple columns subset
     - Read more about secondary index in the [vignette](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-secondary-indices-and-auto-indexing.html)
 ```{r}
-head(dt['A', on = 'provider'], 5)
+head(dt[.('A', 0), on = c('provider', 'providerA')], 5)
 ```
 
 
-## Column selects - using names
+---
+
+# Column selects - using names
 
 - Notice that `df` returns a vector instead of data.frame
 ```{r}
@@ -108,7 +145,10 @@ head(df[, 'claims'], 5)
 ```{r}
 head(dt[, 'claims'], 5)
 ```
-## Column selects - using names - Cont.
+
+---
+
+# Column selects - using names - Cont.
 
 - To return a vector from a data.table, one can use the following
 ```{r}
@@ -118,15 +158,18 @@ head(dt[['claims']], 5)
 head(dt$claims, 5)
 ```
 
-## Column selects - multiple names
+---
+
+# Column selects - multiple names
 
 ```{r}
 head(df[, c('claims', 'provider')], 5)
 head(dt[, c('claims', 'provider')], 5)
 ```
 
+---
 
-## Column selects - using numbers
+# Column selects - using numbers
 
 - Although selecting by column number is not good practice in general, it is supported to help data.frame users transition more smoothly to data.table
 ```{r}
@@ -134,7 +177,9 @@ head(df[, 1:3], 5)
 head(dt[, 1:3], 5)
 ```
 
-## Column selects different to data.frame - use list
+---
+
+# Column selects different to data.frame - use list
 
 - `.()` is an alias for `list()`, this shortens the syntax
 - You don't need to have quotation mark around the column names
@@ -143,8 +188,9 @@ head(dt[, list(claims, provider)], 5)
 head(dt[, .(claims, provider)], 5)
 ```
 
+---
 
-## Column selects different to data.table - variable approach with `mget` or `..`
+# Column selects different to data.table - variable approach with `mget` or `..`
 
 - This is useful when you have several columns you want to select and don't want to clutter your data.table operation
 - Or you are passing variables in a function call
@@ -161,7 +207,9 @@ head(dt[, cols_to_select], 5)
 # Error in `[.data.table`(dt, , cols_to_select) : j...
 ```
 
-## Column selects different to data.table - variable approach with `mget` or `..` - Cont.
+---
+
+# Column selects different to data.table - variable approach with `mget` or `..` - Cont.
 
 - Use `mget` to get the column names in the correct scope
 ```{r}
@@ -172,10 +220,13 @@ head(dt[, mget(cols_to_select)], 5)
 head(dt[, ..cols_to_select], 5)
 ```
 
+---
 
 # How to add columns to a data.table
 
-## Add columns from existing columns
+---
+
+# Add columns from existing columns
 ```{r}
 df$claims_mean <- mean(df$claims)
 df$logclaims_mean <- mean(df$logclaims)
@@ -186,7 +237,9 @@ head(dt[, .(claims_mean = mean(claims),
 
 ```
 
-## Add columns from vectors
+---
+
+# Add columns from vectors
 
 ```{r}
 claims_mean_vec <- mean(dt$claims)
@@ -196,7 +249,9 @@ head(dt[, .(claims_mean = claims_mean_vec,
             logclaims_mean = logclaims_mean_vec)], 5)
 ```
 
-## Add columns using `lapply`, `.SD`, and `.SDcols`
+---
+
+# Add columns using `lapply`, `.SD`, and `.SDcols`
 - You use `.SD` and `.SDcols` together
 - Below, you apply the mean function over the **S**ubset of the **D**ata.table
 - Which subset? You specify them in `.SDcols`
@@ -205,7 +260,9 @@ cols_to_summarize <- c('claims', 'logclaims')
 head(dt[, lapply(.SD, mean), .SDcols = cols_to_summarize], 5)
 ```
 
-## Add columns by group using `lapply` and `by`
+---
+
+# Add columns by group using `lapply` and `by`
 ```{r}
 cols_to_summarize <- c('claims', 'logclaims')
 cols_to_group <- c('provider')
@@ -213,11 +270,15 @@ head(dt[, lapply(mget(cols_to_summarize),mean), by = cols_to_group], 5)
 head(dt[, lapply(.SD,mean), .SDcols = cols_to_summarize, by = cols_to_group], 5)
 ```
 
+---
+
 # How to make data.table even faster
 
-## The less effecient way - `<-` notation
+---
 
-- If you looked at 'dt' in our previous slides after we added columns, you would not have seen the new columns
+# The less effecient way - `<-` notation
+
+- If you looked at `dt` object in our previous slides after we added columns, you would not have seen the new columns
 - To permanently add columns to the original table as a `data.frame`, one would use the `<-` notation
 - `<-` essentially allocates a copy of the original table in memory, which would be troublesome when you have a big table!
 ```{r}
@@ -225,15 +286,17 @@ dt <- dt[, .(claims_mean = mean(claims),
             logclaims_mean = mean(logclaims))]
 ```
 
-```{r, message=FALSE}
+```{r, echo=FALSE, message=FALSE}
 df <- usmassBI
 dt <- data.table(df)
 ```
 
-## The `:=` notation
+---
+
+# The `:=` notation
 
 - Instead, we should use `:=` whenever possible, to update tables in place without copying
-- You can also use `.SD` and `.SDcols` as described previouly
+- You can also use `.SD` and `.SDcols` as described previously
 ```{r}
 #To add the columns to the items directly to the original, we leverage :=
 cols_to_summarize <- c('claims', 'logclaims')
@@ -243,7 +306,9 @@ dt[, paste0("average", cols_to_summarize) := lapply(mget(cols_to_summarize), mea
 head(dt, 5)
 ```
 
-## The `:=` notation - Cont.
+---
+
+# The `:=` notation - Cont.
 
 - Use ``:=`` form, which allows more commenting in the code
 ```{r}
@@ -256,33 +321,82 @@ dt[, `:=` (
 head(dt, 5)
 ```
 
+---
 
-## Update by reference
+# When you need to modify a table without affecting the original
+
+- Use `copy`
+```{r}
+dt_2 <- copy(dt)
+```
+
+
+---
+
+# Update by reference
 
 - set operation
 
+---
+
 # How to join tables together using data.table
 
-## Joins
+---
+
+# Joins
 
 - merge
 - `[` notation
 
-## Append multiple data.frames together (`Union`)
+---
+
+# Append multiple data.frames together (`Union`)
+
+---
 
 # How to do a SQL `transform` (and back) in data.table 
 
-## Pivot table from long to wide
+---
+
+# Pivot table from long to wide
 
 - dcast
 
-## Pivot table from wide to long
+---
+
+# Pivot table from wide to long
 
 - melt
 
-# Work with data.table using variables
+---
 
-## Passing variables to data.table
+# Special keywords
 
-- Inside a function using get/mget
-- Applying functions to multiple columns (`.SD, .SDcols`)
+---
+
+# `.EACHI`
+
+---
+
+# ` .GRP`
+
+---
+
+# `.BY`
+
+---
+
+# `!J`
+
+---
+
+# Tips when using data.table
+
+---
+
+# Avoid `<-`
+
+---
+
+# Make good friends with `:=` and `set` operations
+
