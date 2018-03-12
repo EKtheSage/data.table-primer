@@ -63,20 +63,31 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, message=FALSE}
 if (!require(pacman)) install.packages('pacman')
-if (!require(CASdatasets)) install.packages("CASdatasets", repos = "http://cas.uqam.ca/pub/R/")
-pacman::p_load(CASdatasets, data.table)
+pacman::p_load(data.table)
 ```
 
 ---
+
 # data.table is very similar to data.frame
 
 ---
 
 # Create tables
 ```{r}
-data('usmassBI')
-df <- usmassBI
-dt <- data.table(df)
+set.seed(42)
+dt <- data.table(
+  state = sample(state.abb, size = 1e6, replace = TRUE),
+  coverage = sample(c('BI', 'PD', 'COLL', 'COMP', 'UM', 'MP', 'PIP'), size = 1e6, replace = TRUE),
+  loss = round(runif(1e6, min = 100, max = 2000), 2),
+  alae = round(runif(1e6, min = 0, max = 1000), 2)
+)
+df <- data.frame(
+  state = sample(state.abb, size = 1e6, replace = TRUE),
+  coverage = sample(c('BI', 'PD', 'COLL', 'COMP', 'UM', 'MP', 'PIP'), size = 1e6, replace = TRUE),
+  loss = round(runif(1e6, min = 100, max = 2000), 2),
+  alae = round(runif(1e6, min = 0, max = 1000), 2)
+)
+
 class(df)
 class(dt)
 setDT(df) # modifies df to become a data.table in place without copying
@@ -89,8 +100,12 @@ class(df)
 # Looking at the data.table
 
 ```{r}
-data('usmassBI')
-df <- usmassBI
+df <- data.frame(
+  state = sample(state.abb, size = 1e6, replace = TRUE),
+  coverage = sample(c('BI', 'PD', 'COLL', 'COMP', 'UM', 'MP', 'PIP'), size = 1e6, replace = TRUE),
+  loss = round(runif(1e6, min = 100, max = 2000), 2),
+  alae = round(runif(1e6, min = 0, max = 1000), 2)
+)
 summary(df)
 summary(dt)
 ```
